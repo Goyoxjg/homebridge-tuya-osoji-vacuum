@@ -14,8 +14,8 @@ export class OsojiVacuumAccessory {
     // Inicializar cliente Tuya
     this.tuya = new TuyaContext({
       baseUrl: this.platform.config.endpoint,
-      accessKey: this.platform.config.accessId,
-      secretKey: this.platform.config.accessSecret,
+      accessKey: this.platform.config.accessKey,
+      secretKey: this.platform.config.secretKey,
     });
 
     // Configurar información del accesorio
@@ -46,6 +46,16 @@ export class OsojiVacuumAccessory {
     try {
       this.platform.log.info(`Setting vacuum to: ${isOn ? 'ON (cleaning)' : 'OFF (stop)'}`);
 
+      // Debug: Log de la petición que se enviará
+      if (this.platform.config.debug) {
+        this.platform.log.info('[DEBUG] Enviando petición a Tuya API:');
+        this.platform.log.info(`[DEBUG] Path: /v1.0/devices/${this.platform.config.deviceId}/commands`);
+        this.platform.log.info(`[DEBUG] Method: POST`);
+        this.platform.log.info(`[DEBUG] Body: ${JSON.stringify({
+          commands: [{ code: 'power', value: isOn }],
+        }, null, 2)}`);
+      }
+
       // Enviar comando a Tuya
       const response = await this.tuya.request({
         path: `/v1.0/devices/${this.platform.config.deviceId}/commands`,
@@ -60,14 +70,26 @@ export class OsojiVacuumAccessory {
         },
       });
 
+      // Debug: Log de la respuesta completa
+      if (this.platform.config.debug) {
+        this.platform.log.info('[DEBUG] Respuesta de Tuya API:');
+        this.platform.log.info(`[DEBUG] ${JSON.stringify(response, null, 2)}`);
+      }
+
       if (response.success) {
         this.platform.log.debug('Command sent successfully:', JSON.stringify(response));
       } else {
         this.platform.log.error('Failed to send command:', response.msg || 'Unknown error');
+        if (this.platform.config.debug) {
+          this.platform.log.error('[DEBUG] Error completo:', JSON.stringify(response, null, 2));
+        }
         throw new Error(response.msg || 'Failed to send command');
       }
     } catch (error) {
       this.platform.log.error('Error sending command to Tuya:', error);
+      if (this.platform.config.debug) {
+        this.platform.log.error('[DEBUG] Stack trace:', error);
+      }
       throw error;
     }
   }
@@ -77,11 +99,24 @@ export class OsojiVacuumAccessory {
    */
   async getOn(): Promise<CharacteristicValue> {
     try {
+      // Debug: Log de la petición que se enviará
+      if (this.platform.config.debug) {
+        this.platform.log.info('[DEBUG] Consultando estado del dispositivo...');
+        this.platform.log.info(`[DEBUG] Path: /v1.0/devices/${this.platform.config.deviceId}/status`);
+        this.platform.log.info('[DEBUG] Method: GET');
+      }
+
       // Obtener el estado actual del dispositivo
       const response = await this.tuya.request({
         path: `/v1.0/devices/${this.platform.config.deviceId}/status`,
         method: 'GET',
       });
+
+      // Debug: Log de la respuesta completa
+      if (this.platform.config.debug) {
+        this.platform.log.info('[DEBUG] Respuesta de estado:');
+        this.platform.log.info(`[DEBUG] ${JSON.stringify(response, null, 2)}`);
+      }
 
       if (response.success && response.result) {
         // Buscar el estado del código 'power'
@@ -89,13 +124,25 @@ export class OsojiVacuumAccessory {
         const isOn = powerStatus ? powerStatus.value : false;
 
         this.platform.log.debug('Current vacuum state:', isOn ? 'ON' : 'OFF');
+
+        if (this.platform.config.debug) {
+          this.platform.log.info(`[DEBUG] Estado de 'power' encontrado: ${isOn}`);
+          this.platform.log.info(`[DEBUG] Todos los estados: ${JSON.stringify(response.result, null, 2)}`);
+        }
+
         return isOn;
       } else {
         this.platform.log.error('Failed to get device status:', response.msg || 'Unknown error');
+        if (this.platform.config.debug) {
+          this.platform.log.error('[DEBUG] Error completo:', JSON.stringify(response, null, 2));
+        }
         return false;
       }
     } catch (error) {
       this.platform.log.error('Error getting device status from Tuya:', error);
+      if (this.platform.config.debug) {
+        this.platform.log.error('[DEBUG] Stack trace:', error);
+      }
       return false;
     }
   }

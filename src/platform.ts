@@ -29,7 +29,7 @@ export class OsojiVacuumPlatform implements DynamicPlatformPlugin {
     this.log.debug('Finished initializing platform:', this.config.name);
 
     // Validar configuración
-    if (!this.config.accessId || !this.config.accessSecret || !this.config.deviceId || !this.config.endpoint) {
+    if (!this.config.accessKey || !this.config.secretKey || !this.config.deviceId || !this.config.endpoint) {
       this.log.error('Missing required configuration. Please check your config.json');
       return;
     }

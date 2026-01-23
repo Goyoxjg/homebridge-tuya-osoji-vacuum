@@ -20,8 +20,8 @@
         "placeholder": "Ejemplo: ak7m2ps4xqr9zyh5wvbn",
         "description": "Obtén este valor desde Tuya IoT Platform → Cloud → Tu Proyecto → Overview → Access ID/Client ID"
       },
-      "accessSecret": {
-        "title": "Tuya Access Secret",
+      "secretKey": {
+        "title": "Tuya Secret Key",
         "type": "string",
         "required": true,
         "placeholder": "Ejemplo: f3b8e927c1d64a2e89f0b5c8a3d7e621",
@@ -58,6 +58,12 @@
             "enum": ["https://openapi.tuyain.com"]
           }
         ]
+      },
+      "debug": {
+        "title": "Modo Debug",
+        "type": "boolean",
+        "default": false,
+        "description": "Activa logs detallados de todas las peticiones y respuestas de la API de Tuya para debugging"
       }
     }
   },
@@ -79,8 +85,8 @@
       "expandable": true,
       "expanded": true,
       "items": [
-        "accessId",
-        "accessSecret"
+        "accessKey",
+        "secretKey"
       ]
     },
     {
@@ -90,7 +96,8 @@
       "expanded": true,
       "items": [
         "deviceId",
-        "endpoint"
+        "endpoint",
+        "debug"
       ]
     },
     {

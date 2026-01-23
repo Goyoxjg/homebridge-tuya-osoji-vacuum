@@ -1,7 +1,8 @@
 export interface OsojiVacuumPlatformConfig {
   name: string;
-  accessId: string;
-  accessSecret: string;
+  accessKey: string;  // Cambiado de accessId (API v2.x)
+  secretKey: string;  // Cambiado de accessSecret (API v2.x)
   deviceId: string;
   endpoint: string;
+  debug?: boolean;  // Flag opcional para habilitar logs detallados
 }

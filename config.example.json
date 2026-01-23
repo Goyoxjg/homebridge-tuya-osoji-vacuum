@@ -9,10 +9,11 @@
     {
       "platform": "OsojiVacuum",
       "name": "Osoji Vacuum",
-      "accessId": "TU_TUYA_ACCESS_ID_AQUI",
-      "accessSecret": "TU_TUYA_ACCESS_SECRET_AQUI",
+      "accessKey": "TU_TUYA_ACCESS_KEY_AQUI",
+      "secretKey": "TU_TUYA_SECRET_KEY_AQUI",
       "deviceId": "TU_DEVICE_ID_AQUI",
-      "endpoint": "https://openapi.tuyaus.com"
+      "endpoint": "https://openapi.tuyaus.com",
+      "debug": false
     }
   ]
 }
