@@ -1,0 +1,101 @@
+{
+  "pluginAlias": "OsojiVacuum",
+  "pluginType": "platform",
+  "singular": true,
+  "headerDisplay": "Plugin para controlar la aspiradora Osoji X420 mediante Tuya Cloud API. <br><br>⚠️ **Importante**: Necesitas obtener las credenciales desde <a href='https://iot.tuya.com' target='_blank'>Tuya IoT Platform</a>.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Nombre de la Plataforma",
+        "type": "string",
+        "default": "Osoji Vacuum",
+        "required": true,
+        "description": "Nombre descriptivo para identificar esta plataforma en los logs de Homebridge"
+      },
+      "accessId": {
+        "title": "Tuya Access ID",
+        "type": "string",
+        "required": true,
+        "placeholder": "Ejemplo: ak7m2ps4xqr9zyh5wvbn",
+        "description": "Obtén este valor desde Tuya IoT Platform → Cloud → Tu Proyecto → Overview → Access ID/Client ID"
+      },
+      "accessSecret": {
+        "title": "Tuya Access Secret",
+        "type": "string",
+        "required": true,
+        "placeholder": "Ejemplo: f3b8e927c1d64a2e89f0b5c8a3d7e621",
+        "description": "Obtén este valor desde Tuya IoT Platform → Cloud → Tu Proyecto → Overview → Access Secret/Client Secret"
+      },
+      "deviceId": {
+        "title": "Device ID de la Aspiradora",
+        "type": "string",
+        "required": true,
+        "placeholder": "Ejemplo: bf4a77e8f9b2c6d3e5mnop",
+        "description": "ID del dispositivo Osoji X420. Encuéntralo en Tuya IoT Platform → Devices → tu aspiradora → Device ID"
+      },
+      "endpoint": {
+        "title": "Tuya API Endpoint",
+        "type": "string",
+        "required": true,
+        "default": "https://openapi.tuyaus.com",
+        "description": "Selecciona el endpoint según la región de tu Data Center en Tuya",
+        "oneOf": [
+          {
+            "title": "Estados Unidos (US)",
+            "enum": ["https://openapi.tuyaus.com"]
+          },
+          {
+            "title": "Europa (EU)",
+            "enum": ["https://openapi.tuyaeu.com"]
+          },
+          {
+            "title": "China (CN)",
+            "enum": ["https://openapi.tuyacn.com"]
+          },
+          {
+            "title": "India (IN)",
+            "enum": ["https://openapi.tuyain.com"]
+          }
+        ]
+      }
+    }
+  },
+  "layout": [
+    {
+      "type": "flex",
+      "flex-flow": "row wrap",
+      "items": [
+        {
+          "key": "name",
+          "flex": "1 1 100%"
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "🔐 Credenciales de Tuya IoT Platform",
+      "description": "Obtén estas credenciales creando un proyecto Cloud en https://iot.tuya.com",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        "accessId",
+        "accessSecret"
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "🤖 Configuración del Dispositivo",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        "deviceId",
+        "endpoint"
+      ]
+    },
+    {
+      "type": "help",
+      "helpvalue": "<h5>📚 ¿Cómo obtener las credenciales?</h5><ol><li>Ve a <a href='https://iot.tuya.com' target='_blank'>Tuya IoT Platform</a> y crea una cuenta</li><li>Crea un nuevo proyecto Cloud (Cloud → Create Cloud Project)</li><li>En la pestaña <strong>Overview</strong>, copia el <strong>Access ID</strong> y <strong>Access Secret</strong></li><li>Ve a <strong>Devices</strong> → <strong>Link Tuya App Account</strong> y vincula tu cuenta de Tuya Smart/Smart Life</li><li>Encuentra tu aspiradora Osoji y copia su <strong>Device ID</strong></li><li>En la pestaña <strong>API</strong>, asegúrate de activar <strong>IoT Core</strong> y <strong>Authorization</strong></li></ol><p>📖 Para más detalles, consulta el README del plugin.</p>"
+    }
+  ]
+}

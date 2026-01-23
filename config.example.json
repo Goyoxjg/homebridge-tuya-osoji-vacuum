@@ -1,0 +1,18 @@
+{
+  "bridge": {
+    "name": "Homebridge",
+    "username": "CC:22:3D:E3:CE:30",
+    "port": 51826,
+    "pin": "031-45-154"
+  },
+  "platforms": [
+    {
+      "platform": "OsojiVacuum",
+      "name": "Osoji Vacuum",
+      "accessId": "TU_TUYA_ACCESS_ID_AQUI",
+      "accessSecret": "TU_TUYA_ACCESS_SECRET_AQUI",
+      "deviceId": "TU_DEVICE_ID_AQUI",
+      "endpoint": "https://openapi.tuyaus.com"
+    }
+  ]
+}

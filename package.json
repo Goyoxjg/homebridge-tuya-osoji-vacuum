@@ -1,0 +1,32 @@
+{
+    "name": "homebridge-tuya-osoji-vacuum",
+    "version": "1.0.0",
+    "description": "Plugin para controlar la aspiradora Osoji X420 mediante Tuya Cloud API.",
+    "license": "ISC",
+    "main": "dist/index.js",
+    "engines": {
+        "node": ">=10.17.0",
+        "homebridge": ">=1.0.0"
+    },
+    "scripts": {
+        "build": "rimraf ./dist && tsc",
+        "watch": "rimraf ./dist && tsc -w",
+        "prepublishOnly": "npm run build"
+    },
+    "keywords": [
+        "homebridge-plugin",
+        "tuya",
+        "osoji",
+        "vacuum",
+        "cleaner"
+    ],
+    "dependencies": {
+        "@tuya/tuya-connector-nodejs": "^2.1.2"
+    },
+    "devDependencies": {
+        "@types/node": "^18.15.0",
+        "homebridge": "^1.6.0",
+        "rimraf": "^3.0.2",
+        "typescript": "^4.9.5"
+    }
+}
