@@ -13,8 +13,8 @@
         "required": true,
         "description": "Nombre descriptivo para identificar esta plataforma en los logs de Homebridge"
       },
-      "accessId": {
-        "title": "Tuya Access ID",
+      "accessKey": {
+        "title": "Tuya Access Key",
         "type": "string",
         "required": true,
         "placeholder": "Ejemplo: ak7m2ps4xqr9zyh5wvbn",

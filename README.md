@@ -20,8 +20,8 @@ Antes de instalar este plugin, necesitas:
 
 ### 2. Credenciales de Tuya
 Necesitarás obtener tres valores:
-- **Access ID**: Identificador de tu proyecto
-- **Access Secret**: Clave secreta de tu proyecto  
+- **Access Key (Access ID)**: Identificador de tu proyecto
+- **Secret Key (Access Secret)**: Clave secreta de tu proyecto  
 - **Device ID**: ID único de tu aspiradora Osoji X420
 
 ### 3. Homebridge
@@ -42,13 +42,15 @@ Necesitarás obtener tres valores:
    - **Data Center**: Selecciona tu región (ej: "United States")
 5. Haz clic en **"Create"**
 
-### Paso 2: Obtener Access ID y Access Secret
+### Paso 2: Obtener Access Key y Secret Key
 
 1. En tu proyecto recién creado, ve a la pestaña **"Overview"**
 2. Encontrarás dos valores importantes:
-   - **Access ID/Client ID**: Algo como `cey59ps9wyteycu8mpca`
-   - **Access Secret/Client Secret**: Algo como `78611836d5ed4ff9893b370f69963cc3`
+   - **Access ID/Client ID** → Copia este valor como tu **accessKey**
+   - **Access Secret/Client Secret** → Copia este valor como tu **secretKey**
 3. **¡GUÁRDALOS!** Los necesitarás para configurar el plugin
+
+> **Nota**: En la configuración del plugin, estos campos se llaman `accessKey` y `secretKey` (nombres usados por la API v2.x de Tuya)
 
 ### Paso 3: Vincular tu Aspiradora al Proyecto
 

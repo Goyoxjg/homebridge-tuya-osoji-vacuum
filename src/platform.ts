@@ -26,12 +26,25 @@ export class OsojiVacuumPlatform implements DynamicPlatformPlugin {
   ) {
     this.config = config as unknown as OsojiVacuumPlatformConfig;
 
+    this.log.info('Initializing OsojiVacuum platform...');
     this.log.debug('Finished initializing platform:', this.config.name);
 
     // Validar configuración
-    if (!this.config.accessKey || !this.config.secretKey || !this.config.deviceId || !this.config.endpoint) {
-      this.log.error('Missing required configuration. Please check your config.json');
+    const missingFields: string[] = [];
+    if (!this.config.accessKey) {missingFields.push('accessKey');}
+    if (!this.config.secretKey) {missingFields.push('secretKey');}
+    if (!this.config.deviceId) {missingFields.push('deviceId');}
+    if (!this.config.endpoint) {missingFields.push('endpoint');}
+
+    if (missingFields.length > 0) {
+      this.log.error(`Missing required configuration fields: ${missingFields.join(', ')}`);
+      this.log.error('Please check your config.json and ensure all required fields are filled.');
       return;
+    }
+
+    this.log.info('Configuration validated successfully');
+    if (this.config.debug) {
+      this.log.info('[DEBUG] Debug mode enabled - detailed logs will be shown');
     }
 
     this.api.on('didFinishLaunching', () => {
