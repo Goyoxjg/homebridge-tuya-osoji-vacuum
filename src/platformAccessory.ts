@@ -100,14 +100,19 @@ export class OsojiVacuumAccessory {
         this.platform.log.info('[DEBUG] Body:');
         this.platform.log.info(JSON.stringify({
           commands: [
+            { code: 'power', value: true },
             { code: 'power_go', value: true },
             { code: 'mode', value: isOn ? 'smart' : 'chargego' },
+            { code: 'suction', value: 'normal' },
           ],
         }, null, 2));
         this.platform.log.info('[DEBUG] ========================================');
       }
 
       // Enviar comando a Tuya
+      // Para Osoji X420 se requieren 4 comandos simultáneos:
+      // - Encender/Limpiar: power=true + power_go=true + mode=smart + suction=normal
+      // - Apagar/Cargar: power=true + power_go=true + mode=chargego + suction=normal
       const response = await this.tuya.request({
         path: `/v1.0/devices/${this.platform.config.deviceId}/commands`,
         method: 'POST',
@@ -115,7 +120,19 @@ export class OsojiVacuumAccessory {
           commands: [
             {
               code: 'power',
-              value: isOn,
+              value: true,
+            },
+            {
+              code: 'power_go',
+              value: true,
+            },
+            {
+              code: 'mode',
+              value: isOn ? 'smart' : 'chargego',
+            },
+            {
+              code: 'suction',
+              value: 'normal',
             },
           ],
         },
