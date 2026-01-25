@@ -99,7 +99,10 @@ export class OsojiVacuumAccessory {
         this.platform.log.info(`[DEBUG] Method: POST`);
         this.platform.log.info('[DEBUG] Body:');
         this.platform.log.info(JSON.stringify({
-          commands: [{ code: 'power', value: isOn }],
+          commands: [
+            { code: 'power_go', value: true },
+            { code: 'mode', value: isOn ? 'smart' : 'chargego' },
+          ],
         }, null, 2));
         this.platform.log.info('[DEBUG] ========================================');
       }
@@ -175,14 +178,20 @@ export class OsojiVacuumAccessory {
       }
 
       if (response.success && response.result) {
-        // Buscar el estado del código 'power'
-        const powerStatus = (response.result as TuyaDeviceStatus[]).find((status) => status.code === 'power');
-        const isOn = powerStatus ? powerStatus.value : false;
+        // Buscar el estado del código 'power_go' o 'mode'
+        // La aspiradora está "ON" (limpiando) si mode != 'chargego' o power_go está activo
+        const powerGoStatus = (response.result as TuyaDeviceStatus[]).find((status) => status.code === 'power_go');
+        const modeStatus = (response.result as TuyaDeviceStatus[]).find((status) => status.code === 'mode');
 
-        this.platform.log.debug('Current vacuum state:', isOn ? 'ON' : 'OFF');
+        // Consideramos que está ON si está en modo smart (limpiando) y no en chargego (cargando)
+        const isOn = modeStatus ? (modeStatus.value === 'smart' || modeStatus.value === 'zone') : false;
+
+        this.platform.log.debug('Current vacuum state:', isOn ? 'ON (cleaning)' : 'OFF (charging/idle)');
 
         if (this.platform.config.debug) {
-          this.platform.log.info(`[DEBUG] Estado de 'power' encontrado: ${isOn}`);
+          this.platform.log.info(`[DEBUG] Estado de 'power_go': ${powerGoStatus?.value ?? 'no encontrado'}`);
+          this.platform.log.info(`[DEBUG] Estado de 'mode': ${modeStatus?.value ?? 'no encontrado'}`);
+          this.platform.log.info(`[DEBUG] Interpretado como: ${isOn ? 'ON' : 'OFF'}`);
           this.platform.log.info(`[DEBUG] Todos los estados: ${JSON.stringify(response.result, null, 2)}`);
         }
 
