@@ -2,6 +2,7 @@ import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { OsojiVacuumPlatform } from './platform';
 import { TuyaContext } from '@tuya/tuya-connector-nodejs';
 import { TuyaDeviceStatus } from './types';
+import { withRetry, validateTuyaResponse, TuyaAPIError } from './utils';
 
 export class OsojiVacuumAccessory {
   private service: Service;
@@ -60,20 +61,36 @@ export class OsojiVacuumAccessory {
     try {
       this.platform.log.info('[DEBUG] Probando conexión con Tuya API...');
 
-      const response = await this.tuya.request({
-        path: `/v1.0/devices/${this.platform.config.deviceId}`,
-        method: 'GET',
-      });
+      const response = await withRetry(
+        async () => {
+          const result = await this.tuya.request({
+            path: `/v1.0/devices/${this.platform.config.deviceId}`,
+            method: 'GET',
+          });
+          validateTuyaResponse(result);
+          return result;
+        },
+        {
+          maxRetries: 2,
+          initialDelayMs: 500,
+          timeoutMs: 10000,
+        },
+        this.platform.log,
+      );
 
-      if (response.success) {
-        this.platform.log.info('[DEBUG] ✓ Conexión exitosa con Tuya API');
-        this.platform.log.info(`[DEBUG] Dispositivo encontrado: ${JSON.stringify(response.result, null, 2)}`);
-      } else {
-        this.platform.log.warn('[DEBUG] ✗ Fallo en conexión con Tuya API');
-        this.platform.log.warn(`[DEBUG] Respuesta: ${JSON.stringify(response, null, 2)}`);
-      }
+      this.platform.log.info('[DEBUG] ✓ Conexión exitosa con Tuya API');
+      this.platform.log.info(`[DEBUG] Dispositivo encontrado: ${JSON.stringify(response.result, null, 2)}`);
     } catch (error) {
-      this.platform.log.error('[DEBUG] ✗ Error al probar conexión:', error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.platform.log.error(`[DEBUG] ✗ Error al conectar con Tuya API: ${errorMsg}`);
+
+      if (error instanceof TuyaAPIError) {
+        this.platform.log.error(`[DEBUG]   Error code: ${error.code}`);
+        this.platform.log.error('[DEBUG]   Posibles soluciones:');
+        this.platform.log.error('  - Verifica que las credenciales sean correctas');
+        this.platform.log.error('  - Comprueba que el Device ID es válido');
+        this.platform.log.error('  - Verifica que el endpoint es correcto para tu región');
+      }
     }
   }
 
@@ -87,7 +104,13 @@ export class OsojiVacuumAccessory {
     try {
       this.platform.log.info(`[${timestamp}] Setting vacuum to: ${isOn ? 'ON (cleaning)' : 'OFF (stop)'}`);
 
-      // Debug: Log de la petición que se enviará
+      const commands = [
+        { code: 'power', value: true },
+        { code: 'power_go', value: true },
+        { code: 'mode', value: isOn ? 'smart' : 'chargego' },
+        { code: 'suction', value: 'normal' },
+      ];
+
       if (this.platform.config.debug) {
         this.platform.log.info('[DEBUG] ========================================');
         this.platform.log.info('[DEBUG] Enviando comando a Tuya API');
@@ -97,75 +120,49 @@ export class OsojiVacuumAccessory {
         this.platform.log.info(`[DEBUG] Device ID: ${this.platform.config.deviceId}`);
         this.platform.log.info(`[DEBUG] Path: /v1.0/devices/${this.platform.config.deviceId}/commands`);
         this.platform.log.info(`[DEBUG] Method: POST`);
-        this.platform.log.info('[DEBUG] Body:');
-        this.platform.log.info(JSON.stringify({
-          commands: [
-            { code: 'power', value: true },
-            { code: 'power_go', value: true },
-            { code: 'mode', value: isOn ? 'smart' : 'chargego' },
-            { code: 'suction', value: 'normal' },
-          ],
-        }, null, 2));
+        this.platform.log.info('[DEBUG] Body:', JSON.stringify({ commands }, null, 2));
         this.platform.log.info('[DEBUG] ========================================');
       }
 
-      // Enviar comando a Tuya
-      // Para Osoji X420 se requieren 4 comandos simultáneos:
-      // - Encender/Limpiar: power=true + power_go=true + mode=smart + suction=normal
-      // - Apagar/Cargar: power=true + power_go=true + mode=chargego + suction=normal
-      const response = await this.tuya.request({
-        path: `/v1.0/devices/${this.platform.config.deviceId}/commands`,
-        method: 'POST',
-        body: {
-          commands: [
-            {
-              code: 'power',
-              value: true,
-            },
-            {
-              code: 'power_go',
-              value: true,
-            },
-            {
-              code: 'mode',
-              value: isOn ? 'smart' : 'chargego',
-            },
-            {
-              code: 'suction',
-              value: 'normal',
-            },
-          ],
+      // Enviar comando a Tuya con reintentos
+      const response = await withRetry(
+        async () => {
+          const result = await this.tuya.request({
+            path: `/v1.0/devices/${this.platform.config.deviceId}/commands`,
+            method: 'POST',
+            body: { commands },
+          });
+          validateTuyaResponse(result);
+          return result;
         },
-      });
+        {
+          maxRetries: 3,
+          initialDelayMs: 500,
+          timeoutMs: 15000,
+        },
+        this.platform.log,
+      );
 
-      // Debug: Log de la respuesta completa
       if (this.platform.config.debug) {
         this.platform.log.info('[DEBUG] ========================================');
         this.platform.log.info('[DEBUG] Respuesta de Tuya API');
         this.platform.log.info('[DEBUG] ========================================');
-        this.platform.log.info(JSON.stringify(response, null, 2));
+        this.platform.log.info('[DEBUG]', JSON.stringify(response, null, 2));
         this.platform.log.info('[DEBUG] ========================================');
       }
 
-      if (response.success) {
-        this.platform.log.info(`✓ Command sent successfully! Vacuum should ${isOn ? 'start cleaning' : 'stop'}`);
-        this.platform.log.debug('Full response:', JSON.stringify(response));
-      } else {
-        this.platform.log.error('✗ Failed to send command');
-        this.platform.log.error(`Error message: ${response.msg || 'Unknown error'}`);
-        this.platform.log.error(`Error code: ${response.code || 'N/A'}`);
-        if (this.platform.config.debug) {
-          this.platform.log.error('[DEBUG] Error completo:', JSON.stringify(response, null, 2));
-        }
-        throw new Error(response.msg || 'Failed to send command');
-      }
+      this.platform.log.info(`✓ Command sent successfully! Vacuum should ${isOn ? 'start cleaning' : 'stop'}`);
     } catch (error) {
-      this.platform.log.error('✗ Exception occurred while sending command to Tuya');
-      this.platform.log.error(`Error: ${error}`);
-      if (this.platform.config.debug && error instanceof Error) {
-        this.platform.log.error('[DEBUG] Stack trace:');
-        this.platform.log.error(error.stack || 'No stack trace available');
+      this.platform.log.error(`✗ Failed to send command: ${error instanceof Error ? error.message : String(error)}`);
+
+      if (error instanceof TuyaAPIError) {
+        this.platform.log.error(`  Error code: ${error.code}`);
       }
+
+      if (this.platform.config.debug && error instanceof Error) {
+        this.platform.log.error('[DEBUG] Stack trace:', error.stack);
+      }
+
       throw error;
     }
   }
@@ -175,56 +172,61 @@ export class OsojiVacuumAccessory {
    */
   async getOn(): Promise<CharacteristicValue> {
     try {
-      // Debug: Log de la petición que se enviará
       if (this.platform.config.debug) {
         this.platform.log.info('[DEBUG] Consultando estado del dispositivo...');
         this.platform.log.info(`[DEBUG] Path: /v1.0/devices/${this.platform.config.deviceId}/status`);
         this.platform.log.info('[DEBUG] Method: GET');
       }
 
-      // Obtener el estado actual del dispositivo
-      const response = await this.tuya.request({
-        path: `/v1.0/devices/${this.platform.config.deviceId}/status`,
-        method: 'GET',
-      });
+      const response = await withRetry(
+        async () => {
+          const result = await this.tuya.request({
+            path: `/v1.0/devices/${this.platform.config.deviceId}/status`,
+            method: 'GET',
+          });
+          validateTuyaResponse(result);
+          return result;
+        },
+        {
+          maxRetries: 2,
+          initialDelayMs: 300,
+          timeoutMs: 10000,
+        },
+        this.platform.log,
+      );
 
-      // Debug: Log de la respuesta completa
       if (this.platform.config.debug) {
-        this.platform.log.info('[DEBUG] Respuesta de estado:');
-        this.platform.log.info(`[DEBUG] ${JSON.stringify(response, null, 2)}`);
+        this.platform.log.info('[DEBUG] Respuesta de estado:', JSON.stringify(response, null, 2));
       }
 
-      if (response.success && response.result) {
-        // Buscar el estado del código 'power_go' o 'mode'
-        // La aspiradora está "ON" (limpiando) si mode != 'chargego' o power_go está activo
-        const powerGoStatus = (response.result as TuyaDeviceStatus[]).find((status) => status.code === 'power_go');
+      if (response.result && Array.isArray(response.result)) {
         const modeStatus = (response.result as TuyaDeviceStatus[]).find((status) => status.code === 'mode');
+        const isOn = modeStatus ? modeStatus.value === 'smart' || modeStatus.value === 'zone' : false;
 
-        // Consideramos que está ON si está en modo smart (limpiando) y no en chargego (cargando)
-        const isOn = modeStatus ? (modeStatus.value === 'smart' || modeStatus.value === 'zone') : false;
-
-        this.platform.log.debug('Current vacuum state:', isOn ? 'ON (cleaning)' : 'OFF (charging/idle)');
+        this.platform.log.debug(`Current vacuum state: ${isOn ? 'ON (cleaning)' : 'OFF (charging/idle)'}`);
 
         if (this.platform.config.debug) {
-          this.platform.log.info(`[DEBUG] Estado de 'power_go': ${powerGoStatus?.value ?? 'no encontrado'}`);
           this.platform.log.info(`[DEBUG] Estado de 'mode': ${modeStatus?.value ?? 'no encontrado'}`);
           this.platform.log.info(`[DEBUG] Interpretado como: ${isOn ? 'ON' : 'OFF'}`);
-          this.platform.log.info(`[DEBUG] Todos los estados: ${JSON.stringify(response.result, null, 2)}`);
         }
 
         return isOn;
       } else {
-        this.platform.log.error('Failed to get device status:', response.msg || 'Unknown error');
-        if (this.platform.config.debug) {
-          this.platform.log.error('[DEBUG] Error completo:', JSON.stringify(response, null, 2));
-        }
+        this.platform.log.warn('Invalid device status response: result is not an array');
         return false;
       }
     } catch (error) {
-      this.platform.log.error('Error getting device status from Tuya:', error);
-      if (this.platform.config.debug) {
-        this.platform.log.error('[DEBUG] Stack trace:', error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.platform.log.error(`Failed to get device status: ${errorMsg}`);
+
+      if (error instanceof TuyaAPIError) {
+        this.platform.log.error(`  Error code: ${error.code}`);
       }
+
+      if (this.platform.config.debug && error instanceof Error) {
+        this.platform.log.debug('[DEBUG] Stack trace:', error.stack);
+      }
+
       return false;
     }
   }

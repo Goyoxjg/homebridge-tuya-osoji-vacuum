@@ -12,6 +12,14 @@ Plugin de Homebridge para controlar la aspiradora robot **Osoji X420** en Apple 
 
 ## 🔄 Actualizaciones Recientes
 
+**v1.0.6 - Mejoras de Estabilidad y Manejo de Errores**
+- ✅ Sistema de reintentos automáticos con backoff exponencial
+- ✅ Timeouts configurables en llamadas a API
+- ✅ Validación robusta de respuestas de Tuya API
+- ✅ Mejora de logs y debugging
+- ✅ Validación mejorada de configuración
+- ✅ Guía de troubleshooting completa
+
 **v1.0.5 - Correcciones de Compatibilidad con iOS Home**
 - ✅ Actualizado a Node.js 18+ y Homebridge 1.8+ para mejor compatibilidad
 - ✅ Agregada categoría correcta del accesorio (AIR_PURIFIER) para reconocimiento en HomeKit
@@ -95,7 +103,66 @@ Necesitarás obtener tres valores:
 
 ### Opción 2: Instalación Manual
 
+```
+
+## 🔧 Troubleshooting
+
+### El dispositivo aparece como incompatible en HomeKit
+
+**Soluciones:**
+1. Asegúrate de tener Homebridge **v1.8.0 o superior** y **Node.js v18.0.0 o superior**
+2. Elimina el accesorio del HomeKit y reinicia Homebridge para que se detecte correctamente
+3. Verifica los logs: `[DEBUG]` debe estar activado en configuración para ver detalles
+
 ```bash
+# Limpiar cache de Homebridge y reiniciar
+sudo systemctl restart homebridge
+```
+
+### El comando de encendido/apagado no funciona
+
+**Posibles causas y soluciones:**
+- **Timeout de conexión**: El plugin reintentar automáticamente 3 veces. Verifica:
+  - Conexión a internet estable
+  - Endpoint correcto en configuración (US/EU/CN/IN)
+  
+- **Error de autenticación**: Verifica:
+  - Access Key es correcto
+  - Secret Key es correcto
+  - Device ID es válido
+
+- **Activar Debug mode**: En los settings del plugin, activa "Modo Debug" para ver logs detallados
+
+### El dispositivo no responde a las consultas de estado
+
+- El plugin reintentar automáticamente con backoff exponencial
+- Espera a que Homebridge se estabilice (puede tardar ~30 segundos en la primera consulta)
+- Verifica que `IoT Core` API está activada en Tuya IoT Platform
+
+### Cómo ver logs detallados
+
+```bash
+# Con Homebridge CLI
+hb-service logs
+
+# O si usas systemd
+sudo journalctl -u homebridge -f
+
+# Buscar solo errores de Tuya
+hb-service logs | grep -i tuya
+```
+
+**Modo Debug:** Activa "Modo Debug" en la configuración del plugin para ver requests/responses completos de la API Tuya.
+
+## 📞 Soporte
+
+- 🐛 [Reportar problemas en GitHub](https://github.com/Goyoxjg/homebridge-tuya-osoji-vacuum/issues)
+- 📖 [Documentación oficial de Homebridge](https://github.com/homebridge/homebridge)
+- 🔑 [Documentación Tuya IoT Platform](https://developer.tuya.com/)
+
+## 📄 Licencia
+
+ISCbash
 # Instalar el plugin globalmente
 npm install -g homebridge-osoji-vacuum
 
