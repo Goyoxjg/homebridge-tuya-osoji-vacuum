@@ -6,6 +6,7 @@ import {
   PlatformConfig,
   Service,
   Characteristic,
+  Categories,
 } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
@@ -68,7 +69,7 @@ export class OsojiVacuumPlatform implements DynamicPlatformPlugin {
       new OsojiVacuumAccessory(this, existingAccessory);
     } else {
       this.log.info('Adding new accessory: OSOJI');
-      const accessory = new this.api.platformAccessory('OSOJI', uuid);
+      const accessory = new this.api.platformAccessory('OSOJI', uuid, Categories.AIR_PURIFIER);
 
       accessory.context.device = {
         deviceId: this.config.deviceId,

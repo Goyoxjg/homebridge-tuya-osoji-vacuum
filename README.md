@@ -10,6 +10,13 @@ Plugin de Homebridge para controlar la aspiradora robot **Osoji X420** en Apple 
 - ✅ **Automatizaciones**: Programa limpiezas automáticas
 - ✅ **Configuración Visual**: Interfaz gráfica en Homebridge Config UI X
 
+## 🔄 Actualizaciones Recientes
+
+**v1.0.5 - Correcciones de Compatibilidad con iOS Home**
+- ✅ Actualizado a Node.js 18+ y Homebridge 1.8+ para mejor compatibilidad
+- ✅ Agregada categoría correcta del accesorio (AIR_PURIFIER) para reconocimiento en HomeKit
+- ✅ Mejora de estabilidad y compatibilidad con últimas versiones de Apple Home
+
 ## 📋 Requisitos Previos
 
 Antes de instalar este plugin, necesitas:
@@ -25,8 +32,8 @@ Necesitarás obtener tres valores:
 - **Device ID**: ID único de tu aspiradora Osoji X420
 
 ### 3. Homebridge
-- Homebridge v1.0.0 o superior
-- Node.js v10.17.0 o superior
+- Homebridge v1.8.0 o superior
+- Node.js v18.0.0 o superior
 
 ## 🔑 Cómo Obtener las Credenciales de Tuya
 
