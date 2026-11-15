@@ -28,10 +28,10 @@ class LocalTests(unittest.TestCase):
         result = bridge.run({**self.req, "action": "start"}, self.factory)
         self.assertEqual(self.device.writes, [{1: True, 2: True, 3: "smart"}])
         self.assertTrue(result["ok"])
-    def test_dock_is_blocked_until_verified(self):
-        with self.assertRaisesRegex(RuntimeError, "not yet verified"):
-            bridge.run({**self.req, "action": "dock"}, self.factory)
-        self.assertEqual(self.device.writes, [])
+    def test_dock_uses_verified_atomic_scene(self):
+        result = bridge.run({**self.req, "action": "dock"}, self.factory)
+        self.assertEqual(self.device.writes, [{1: True, 2: False, 3: "chargego"}])
+        self.assertTrue(result["ok"])
         self.assertTrue(self.device.closed)
     def test_no_arbitrary_commands(self):
         with self.assertRaises(ValueError):
