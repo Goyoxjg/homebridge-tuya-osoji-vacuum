@@ -19,12 +19,12 @@ Ampliar la interfaz de Apple Casa, inspirada en la ficha del aire acondicionado 
 - Lectura observada: DP1 `power`, DP3 `mode`, DP5 `status`, DP6 batería; DP2 `power_go` no figura en el resultado de `status()`.
 - Inicio comprobado: escritura **atómica** `{1: True, 2: True, 3: "smart"}` -> `smart_clean` y limpieza física.
 - Detener y regresar a base comprobado: escritura **atómica** `{1: True, 2: False, 3: "chargego"}` -> vuelta física a la base.
-- La succión es `DP14` y admite `normal` o `strong`: **lecturas LAN confirmadas con ambos valores mientras limpia**; la escritura LAN aún requiere una prueba física supervisada.
+- La succión es `DP14` y admite `normal` o `strong`: **lecturas LAN confirmadas con ambos valores mientras limpia**; la escritura LAN `set_value(14, 'strong')` está confirmada por respuesta y lectura posterior; falta validación perceptual de potencia.
 - El accesorio actual es `Service.Switch`, asociado a un UUID estable. Debe existir ruta de migración sin romper emparejamiento ni automaciones.
 
 ## Selección de presentación en configuración
 
-La opción `homekitPresentation` acepta `switch` (predeterminado, V1) o `fan` (prototipo V2 Fanv2). Ambas usan el mismo accesorio y transporte LAN verificado. `fan` habilita únicamente `Active` (inicio/dock); no se ofrecen succión o selector de modos ficticios hasta verificar DPS y posibilidades reales de Apple Casa. Cambiar de tipo puede requerir recrear automatizaciones antiguas. Se conserva el UUID y se elimina el servicio anterior del accesorio cacheado; rollback: volver a `switch` y reiniciar Homebridge.
+La opción `homekitPresentation` acepta `switch` (predeterminado, V1) o `fan` (prototipo V2 Fanv2). Ambas usan el mismo accesorio y transporte LAN verificado. `fan` habilita `Active` (inicio/dock) y `RotationSpeed` (dos niveles reales vía DP14), solo en transporte LAN. El selector de modos sigue pendiente. Cambiar de tipo puede requerir recrear automatizaciones antiguas. Se conserva el UUID y se elimina el servicio anterior del accesorio cacheado; rollback: volver a `switch` y reiniciar Homebridge.
 
 ## Estrategia de interfaz: opciones a evaluar
 
@@ -54,7 +54,7 @@ La opción `homekitPresentation` acepta `switch` (predeterminado, V1) o `fan` (p
 
 ## Fase 3 — Interfaz Apple Casa
 
-- [x] **Spike Fanv2 inicial:** selección configurable `homekitPresentation=fan`, expone `Active` y reutiliza inicio/dock validados. **Pendiente** añadir `RotationSpeed` una vez descubiertos y verificados los niveles reales; no simular porcentajes.
+- [x] **Fanv2 con succión DP14:** `Active` para inicio/dock y `RotationSpeed` para `normal`/`strong` discretos. Escritura `strong` confirmada por respuesta y lectura posterior; falta validar control desde Apple Casa y cambio físico perceptible.
 - [ ] **Selector de modos:** comprobar si algún tipo nativo permite las opciones necesarias. Si no, crear switches de escenas (mutuamente excluyentes y sincronizados con el estado) sin duplicar el switch principal.
 - [ ] Probar propuesta alternativa **Matter RoboticVacuumCleaner** con `RvcRunMode`, `RvcCleanMode` y estado de docking; comprobar en Apple Casa y las posibilidades reales de control de succión.
 - [ ] Seleccionar presentación definitiva en base a usabilidad real: menú nativo solo si existe, barra solo si control respaldado por DP confirmado.
