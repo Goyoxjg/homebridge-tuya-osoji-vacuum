@@ -2,7 +2,7 @@
   "pluginAlias": "OsojiVacuum",
   "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "Plugin para controlar la aspiradora Osoji X420 mediante Tuya Cloud API. <br><br>⚠️ **Importante**: Necesitas obtener las credenciales desde <a href='https://iot.tuya.com' target='_blank'>Tuya IoT Platform</a>.",
+  "headerDisplay": "OSOJI X420: modo local mediante TinyTuya (sin suscripción Tuya Cloud) o modo cloud heredado. La Local Key nunca debe publicarse.",
   "schema": {
     "type": "object",
     "properties": {
@@ -16,14 +16,14 @@
       "accessKey": {
         "title": "Tuya Access Key",
         "type": "string",
-        "required": true,
+        "required": false,
         "placeholder": "Ejemplo: ak7m2ps4xqr9zyh5wvbn",
         "description": "Obtén este valor desde Tuya IoT Platform → Cloud → Tu Proyecto → Overview → Access ID/Client ID"
       },
       "secretKey": {
         "title": "Tuya Secret Key",
         "type": "string",
-        "required": true,
+        "required": false,
         "placeholder": "Ejemplo: f3b8e927c1d64a2e89f0b5c8a3d7e621",
         "description": "Obtén este valor desde Tuya IoT Platform → Cloud → Tu Proyecto → Overview → Access Secret/Client Secret"
       },
@@ -37,25 +37,33 @@
       "endpoint": {
         "title": "Tuya API Endpoint",
         "type": "string",
-        "required": true,
+        "required": false,
         "default": "https://openapi.tuyaus.com",
         "description": "Selecciona el endpoint según la región de tu Data Center en Tuya",
         "oneOf": [
           {
             "title": "Estados Unidos (US)",
-            "enum": ["https://openapi.tuyaus.com"]
+            "enum": [
+              "https://openapi.tuyaus.com"
+            ]
           },
           {
             "title": "Europa (EU)",
-            "enum": ["https://openapi.tuyaeu.com"]
+            "enum": [
+              "https://openapi.tuyaeu.com"
+            ]
           },
           {
             "title": "China (CN)",
-            "enum": ["https://openapi.tuyacn.com"]
+            "enum": [
+              "https://openapi.tuyacn.com"
+            ]
           },
           {
             "title": "India (IN)",
-            "enum": ["https://openapi.tuyain.com"]
+            "enum": [
+              "https://openapi.tuyain.com"
+            ]
           }
         ]
       },
@@ -64,45 +72,78 @@
         "type": "boolean",
         "default": false,
         "description": "Activa logs detallados de todas las peticiones y respuestas de la API de Tuya para debugging"
+      },
+      "connectionMode": {
+        "title": "Modo de conexión",
+        "type": "string",
+        "default": "local",
+        "enum": [
+          "local",
+          "cloud",
+          "auto"
+        ],
+        "description": "auto: comandos por LAN; fallback Cloud únicamente para leer estado"
+      },
+      "localIp": {
+        "title": "IP local de OSOJI",
+        "type": "string",
+        "placeholder": "192.168.1.105"
+      },
+      "localKey": {
+        "title": "Local Key (confidencial)",
+        "type": "string",
+        "format": "password"
+      },
+      "localVersion": {
+        "title": "Versión Tuya LAN",
+        "type": "string",
+        "default": "3.4"
+      },
+      "pythonPath": {
+        "title": "Python con TinyTuya instalado",
+        "type": "string",
+        "default": "/home/homebridge/tinytuya-env/bin/python"
+      },
+      "allowLocalCommands": {
+        "title": "Autorizar comandos de movimiento LAN",
+        "type": "boolean",
+        "default": false,
+        "description": "Desactivado por defecto. Activar solo después de validar físicamente inicio y retorno a base."
       }
     }
   },
   "layout": [
     {
-      "type": "flex",
-      "flex-flow": "row wrap",
+      "type": "fieldset",
+      "title": "Conexión",
       "items": [
-        {
-          "key": "name",
-          "flex": "1 1 100%"
-        }
+        "name",
+        "connectionMode",
+        "deviceId",
+        "localIp",
+        "localKey",
+        "localVersion",
+        "pythonPath",
+        "allowLocalCommands"
       ]
     },
     {
       "type": "fieldset",
-      "title": "🔐 Credenciales de Tuya IoT Platform",
-      "description": "Obtén estas credenciales creando un proyecto Cloud en https://iot.tuya.com",
+      "title": "Cloud (solo para modo cloud/auto)",
       "expandable": true,
-      "expanded": true,
+      "expanded": false,
       "items": [
         "accessKey",
-        "secretKey"
+        "secretKey",
+        "endpoint"
       ]
     },
     {
       "type": "fieldset",
-      "title": "🤖 Configuración del Dispositivo",
-      "expandable": true,
-      "expanded": true,
+      "title": "Diagnóstico",
       "items": [
-        "deviceId",
-        "endpoint",
         "debug"
       ]
-    },
-    {
-      "type": "help",
-      "helpvalue": "<h5>📚 ¿Cómo obtener las credenciales?</h5><ol><li>Ve a <a href='https://iot.tuya.com' target='_blank'>Tuya IoT Platform</a> y crea una cuenta</li><li>Crea un nuevo proyecto Cloud (Cloud → Create Cloud Project)</li><li>En la pestaña <strong>Overview</strong>, copia el <strong>Access ID</strong> y <strong>Access Secret</strong></li><li>Ve a <strong>Devices</strong> → <strong>Link Tuya App Account</strong> y vincula tu cuenta de Tuya Smart/Smart Life</li><li>Encuentra tu aspiradora Osoji y copia su <strong>Device ID</strong></li><li>En la pestaña <strong>API</strong>, asegúrate de activar <strong>IoT Core</strong> y <strong>Authorization</strong></li></ol><p>📖 Para más detalles, consulta el README del plugin.</p>"
     }
   ]
 }
