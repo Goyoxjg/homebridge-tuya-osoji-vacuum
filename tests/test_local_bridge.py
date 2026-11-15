@@ -12,10 +12,12 @@ class FakeDevice:
         self.closed = False
         self.phase = "charging_base"
         self.suction = "normal"
+        self.mode = "smart"
     def set_socketTimeout(self, timeout): pass
-    def status(self): return {"dps": {"3": "smart", "5": self.phase, "6": 100, "14": self.suction}}
+    def status(self): return {"dps": {"3": self.mode, "5": self.phase, "6": 100, "14": self.suction}}
     def set_multiple_values(self, values):
         self.writes.append(dict(values))
+        self.mode = values[3]
         return {"dps": {"3": values[3]}}
     def set_value(self, dp, value):
         self.writes.append((dp, value))
@@ -61,6 +63,36 @@ class LocalTests(unittest.TestCase):
         self.device.set_value = lambda dp, value: {"dps": {str(dp): value}}
         with self.assertRaisesRegex(RuntimeError, "not confirmed"):
             bridge.run({**self.req, "action": "set_suction", "suction": "strong"}, self.factory)
+    def test_status_reports_mode(self):
+        self.assertEqual(bridge.run({**self.req, "action": "status"}, self.factory)["mode"], "smart")
+    def test_modes_disabled_by_default(self):
+        self.device.phase = "smart_clean"
+        with self.assertRaisesRegex(RuntimeError, "disabled"):
+            bridge.run({**self.req, "action": "set_mode", "mode": "random"}, self.factory)
+        self.assertEqual(self.device.writes, [])
+    def test_mode_invalid_value_rejected(self):
+        self.device.phase = "smart_clean"
+        with self.assertRaises(ValueError):
+            bridge.run({**self.req, "action": "set_mode", "mode": "chargego", "allowExperimentalModes": True}, self.factory)
+        self.assertEqual(self.device.writes, [])
+    def test_mode_blocked_when_docked(self):
+        with self.assertRaisesRegex(RuntimeError, "active cleaning"):
+            bridge.run({**self.req, "action": "set_mode", "mode": "random", "allowExperimentalModes": True}, self.factory)
+        self.assertEqual(self.device.writes, [])
+    def test_experimental_mode_sequence_and_readback(self):
+        self.device.phase = "smart_clean"
+        result = bridge.run({**self.req, "action": "set_mode", "mode": "random", "allowExperimentalModes": True}, self.factory)
+        self.assertEqual(result["mode"], "random")
+        self.assertEqual(self.device.writes, [{1: True, 2: True, 3: "random"}])
+    def test_mode_noop_does_not_send_command(self):
+        self.device.phase = "smart_clean"
+        bridge.run({**self.req, "action": "set_mode", "mode": "smart", "allowExperimentalModes": True}, self.factory)
+        self.assertEqual(self.device.writes, [])
+    def test_mode_requires_readback(self):
+        self.device.phase = "smart_clean"
+        self.device.set_multiple_values = lambda values: {"dps": {"3": values[3]}}
+        with self.assertRaisesRegex(RuntimeError, "not confirmed"):
+            bridge.run({**self.req, "action": "set_mode", "mode": "spiral", "allowExperimentalModes": True}, self.factory)
     def test_no_arbitrary_commands(self):
         with self.assertRaises(ValueError):
             bridge.run({**self.req, "action": "reset"}, self.factory)
