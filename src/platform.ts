@@ -50,6 +50,18 @@ export class OsojiVacuumPlatform implements DynamicPlatformPlugin {
     const missingFields: string[] = [];
     const invalidFields: Array<{ field: string; reason: string }> = [];
 
+    // Local-only requires no Tuya IoT Cloud credentials.
+    const mode = this.config.connectionMode || 'cloud';
+    if (mode === 'local' || mode === 'auto') {
+      if (!this.config.localIp) missingFields.push('localIp');
+      if (!this.config.localKey) missingFields.push('localKey');
+      if (!this.config.deviceId) missingFields.push('deviceId');
+      if (mode === 'local' || (this.config.accessKey && this.config.secretKey)) {
+        if (missingFields.length) this.log.error('Faltan campos: ' + missingFields.join(', '));
+        else this.log.info('Configuración LAN validada');
+        return;
+      }
+    }
     // Campos requeridos
     if (!this.config.accessKey) {
       missingFields.push('accessKey');
