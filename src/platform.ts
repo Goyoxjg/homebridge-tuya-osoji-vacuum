@@ -38,7 +38,7 @@ export class OsojiVacuumPlatform implements DynamicPlatformPlugin {
     }
 
     this.api.on('didFinishLaunching', () => {
-      log.debug('Executed didFinishLaunching callback');
+      this.log.debug('Executed didFinishLaunching callback');
       this.discoverDevices();
     });
   }
