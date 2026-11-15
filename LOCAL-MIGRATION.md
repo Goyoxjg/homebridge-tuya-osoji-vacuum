@@ -30,7 +30,7 @@ Example configuration **with placeholders only**:
 ## Behavior and limitations
 
 * By default `allowLocalCommands=false` blocks all physical commands. Enable only after supervised validation.
-* `local`: reads DP5 to determine whether cleaning and changes **only DP3** to `smart` for start or `chargego` for dock. This is **not yet device-verified**; perform a supervised physical test before enabling voice/automations.
+* `local`: reads DP5 to determine whether cleaning and changes **DP1=true, DP2=true, DP3=smart together** for start; verified physically on OSOJI X420 with `DP5=smart_clean`. **Dock is deliberately blocked until its LAN sequence is physically validated**, even when `allowLocalCommands=true`. Do not enable HomeKit control until both directions are tested.
 * `cloud`: retains legacy cloud behavior.
 * `auto`: local first; read-only status may fall back to cloud. Commands never fall back automatically to avoid double execution.
 * A DP3 `smart` mode can coexist with charging status, so HomeKit On is determined from DP5 rather than DP3. The observed `charging_base` value is not treated as cleaning.

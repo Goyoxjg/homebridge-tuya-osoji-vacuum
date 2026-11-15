@@ -17,10 +17,15 @@ def run(request, factory=None):
     try:
         if action == "status":
             response = device.status()
+        elif action == "start":
+            # Verified on the OSOJI X420 over Tuya LAN 3.4: the three
+            # datapoints must be sent together, not as individual writes.
+            # The device reported DP5=smart_clean and physically started.
+            response = device.set_multiple_values({1: True, 2: True, 3: "smart"})
         else:
-            # Only DP3 is changed. Never use the previous Cloud multi-command
-            # sequence: it writes power and power_go even for stop.
-            response = device.set_value(3, "smart" if action == "start" else "chargego")
+            # Dock requires a separately supervised LAN test. Do not
+            # assume the legacy Cloud sequence is safe for LAN.
+            raise RuntimeError("Dock command not yet verified over LAN")
         if not isinstance(response, dict) or "Error" in response or "Err" in response:
             raise RuntimeError("Device returned an invalid/error response")
         if action == "status":
