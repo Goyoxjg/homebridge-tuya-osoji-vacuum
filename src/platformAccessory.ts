@@ -108,6 +108,9 @@ export class OsojiVacuumAccessory {
     const timestamp = new Date().toISOString();
 
     if (this.mode !== 'cloud') {
+      if (this.platform.config.allowLocalCommands !== true) {
+        throw new Error('OSOJI local movement commands disabled until supervised verification');
+      }
       try {
         await this.local.setCleaning(isOn);
         return;
