@@ -2,17 +2,19 @@ import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 import { OsojiVacuumPlatformConfig } from './config';
 
-type LocalResponse = { ok: boolean; cleaning?: boolean; status?: string; battery?: number; suction?: 'normal' | 'strong'; error?: string };
+export type CleaningMode = 'smart' | 'random' | 'spiral' | 'wall_follow';
+type LocalResponse = { ok: boolean; cleaning?: boolean; status?: string; battery?: number; suction?: 'normal' | 'strong'; mode?: CleaningMode; error?: string };
 
 export class OsojiLocalClient {
   constructor(private readonly config: OsojiVacuumPlatformConfig) {}
 
-  async execute(action: 'status' | 'start' | 'dock' | 'set_suction', suction?: 'normal' | 'strong'): Promise<LocalResponse> {
+  async execute(action: 'status' | 'start' | 'dock' | 'set_suction' | 'set_mode', suction?: 'normal' | 'strong', mode?: CleaningMode): Promise<LocalResponse> {
     const python = this.config.pythonPath || '/home/homebridge/tinytuya-env/bin/python';
     const script = resolve(__dirname, '../scripts/local_bridge.py');
     const input = JSON.stringify({
       action,
       ...(suction ? { suction } : {}),
+      ...(mode ? { mode, allowExperimentalModes: this.config.allowExperimentalModes === true } : {}),
       deviceId: this.config.deviceId,
       ip: this.config.localIp,
       localKey: this.config.localKey,
@@ -49,6 +51,18 @@ export class OsojiLocalClient {
       child.stdin.on('error', () => { /* close/error handler handles process failure */ });
       child.stdin.end(input);
     });
+  }
+
+  async getCleaningMode(): Promise<CleaningMode | null> {
+    const response = await this.execute('status');
+    return response.cleaning ? response.mode || null : null;
+  }
+
+  async setCleaningMode(mode: CleaningMode): Promise<void> {
+    if (this.config.allowExperimentalModes !== true) {
+      throw new Error('Experimental cleaning modes are disabled');
+    }
+    await this.execute('set_mode', undefined, mode);
   }
 
   async getSuction(): Promise<'normal' | 'strong'> {
