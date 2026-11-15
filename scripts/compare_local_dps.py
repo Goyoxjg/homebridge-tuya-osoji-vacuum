@@ -43,7 +43,7 @@ def main():
                    for k in set(old) | set(current) if old.get(k) != current.get(k)}
         if not changes:
             print("No hubo cambios DPS visibles.")
-        for key in sorted(changes, key=lambda value: int(value) if value.isdigit() else value):
+        for key in sorted(changes, key=lambda value: (0, int(value)) if value.isdigit() else (1, value)):
             previous, now = changes[key]
             print(f"DP{key}: {previous} -> {now}")
 
