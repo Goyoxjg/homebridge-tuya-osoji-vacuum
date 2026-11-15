@@ -4,6 +4,7 @@ export interface OsojiVacuumPlatformConfig {
   localIp?: string;
   localKey?: string;
   localVersion?: string;
+  allowLocalCommands?: boolean;
   pythonPath?: string;
   accessKey?: string;  // Cambiado de accessId (API v2.x)
   secretKey?: string;  // Cambiado de accessSecret (API v2.x)
