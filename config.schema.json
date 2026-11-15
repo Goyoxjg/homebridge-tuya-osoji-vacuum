@@ -109,6 +109,26 @@
         "type": "boolean",
         "default": false,
         "description": "Desactivado por defecto. Activar solo después de validar físicamente inicio y retorno a base."
+      },
+      "homekitPresentation": {
+        "title": "Presentación en Apple Casa",
+        "type": "string",
+        "default": "switch",
+        "oneOf": [
+          {
+            "title": "Interruptor (V1, actual)",
+            "enum": [
+              "switch"
+            ]
+          },
+          {
+            "title": "Ventilador (V2 experimental: encendido/apagado)",
+            "enum": [
+              "fan"
+            ]
+          }
+        ],
+        "description": "Cambia el tipo del accesorio manteniendo su UUID. Fanv2 solo controla inicio/regreso por ahora; selector de modos y barra de succión pendientes de validar DPS. Cambiar de tipo puede requerir rehacer escenas y automatizaciones."
       }
     }
   },
@@ -119,6 +139,7 @@
       "items": [
         "name",
         "connectionMode",
+        "homekitPresentation",
         "deviceId",
         "localIp",
         "localKey",
