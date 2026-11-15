@@ -38,11 +38,11 @@ La opción `homekitPresentation` acepta `switch` (predeterminado, V1) o `fan` (p
 
 ## Fase 1 — Descubrimiento de modos y succión (bloqueante)
 
-- [ ] Obtener desde Tuya, sin publicar credenciales, lista completa de opciones del modo OSOJI y niveles de succión. Usar capturas/configuración de la app o metadatos de funciones Tuya disponibles; no asumir `zone`, `spot`, etc.
-- [ ] Ejecutar **solo lecturas** del mapa DPS con OSOJI en reposo y durante cambios manuales de modo/succión desde la app oficial; registrar qué DP varía, tipo (string/int/bool), rangos y reversibilidad.
+- [x] Obtener desde Tuya lista de modos de OSOJI (`standby`, `random`, `spiral`, `smart`, `chargego`, `wall_follow`) y succión (`normal`, `strong`). Tabla proporcionada por el propietario; mapeo completo documentado en `docs/osoji-dps-map.md`.
+- [ ] Ejecutar **solo lecturas** del mapa DPS durante cambios manuales de succión `normal` ↔ `strong` desde Tuya. Disponible `scripts/compare_local_dps.py`, sin escrituras.
 - [ ] Confirmar si el DP de succión se lee por LAN; algunos DPS son write-only, pueden necesitar consulta adicional o no estar disponibles localmente.
 - [ ] Validar físicamente cada escritura local individual / atómica autorizada, con operación supervisada, sin pruebas automáticas de movimiento.
-- [ ] Generar `docs/osoji-dps-map.md` con evidencia de cada función, valores válidos y nivel de confianza. Claves, IDs privados y trazas sensibles excluidos.
+- [x] Generar `docs/osoji-dps-map.md` con todas las funciones oficiales suministradas, distinguiendo DPs conocidos de desconocidos; sin claves ni IDs privados.
 
 ## Fase 2 — Dominio y transporte
 
