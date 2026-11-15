@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - run: npm ci
-      - run: npm run build
       - run: python -m unittest discover -s tests -v
+      # The legacy lockfile references a private FIF registry; only CI uses a fresh public-registry resolution.
+      - run: rm package-lock.json && npm install --ignore-scripts --no-audit --registry=https://registry.npmjs.org
+      - run: npm run build
