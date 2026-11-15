@@ -1,6 +1,6 @@
 # OSOJI X420 — V2: controles avanzados en Apple Casa
 
-Estado: planificación (sin modificación del plugin instalado) — 2026-11-15
+Estado: selección V1/V2 (Fanv2 power-only) implementada en repositorio, no desplegada en Raspberry — 2026-11-15
 
 ## Objetivo y referencia visual
 
@@ -21,6 +21,10 @@ Ampliar la interfaz de Apple Casa, inspirada en la ficha del aire acondicionado 
 - Detener y regresar a base comprobado: escritura **atómica** `{1: True, 2: False, 3: "chargego"}` -> vuelta física a la base.
 - El Cloud anterior incluía `suction: "normal"`; **todavía no conocemos el DP LAN, los valores o niveles realmente admitidos**.
 - El accesorio actual es `Service.Switch`, asociado a un UUID estable. Debe existir ruta de migración sin romper emparejamiento ni automaciones.
+
+## Selección de presentación en configuración
+
+La opción `homekitPresentation` acepta `switch` (predeterminado, V1) o `fan` (prototipo V2 Fanv2). Ambas usan el mismo accesorio y transporte LAN verificado. `fan` habilita únicamente `Active` (inicio/dock); no se ofrecen succión o selector de modos ficticios hasta verificar DPS y posibilidades reales de Apple Casa. Cambiar de tipo puede requerir recrear automatizaciones antiguas. Se conserva el UUID y se elimina el servicio anterior del accesorio cacheado; rollback: volver a `switch` y reiniciar Homebridge.
 
 ## Estrategia de interfaz: opciones a evaluar
 
@@ -50,7 +54,7 @@ Ampliar la interfaz de Apple Casa, inspirada en la ficha del aire acondicionado 
 
 ## Fase 3 — Interfaz Apple Casa
 
-- [ ] **Spike Fanv2:** construir un accesorio de prueba aislado con `Active`/ `RotationSpeed`; mapear, por ejemplo, niveles discretos a porcentaje de forma explícita y estable, no presentar potencia continua si solo hay 2–4 niveles.
+- [x] **Spike Fanv2 inicial:** selección configurable `homekitPresentation=fan`, expone `Active` y reutiliza inicio/dock validados. **Pendiente** añadir `RotationSpeed` una vez descubiertos y verificados los niveles reales; no simular porcentajes.
 - [ ] **Selector de modos:** comprobar si algún tipo nativo permite las opciones necesarias. Si no, crear switches de escenas (mutuamente excluyentes y sincronizados con el estado) sin duplicar el switch principal.
 - [ ] Probar propuesta alternativa **Matter RoboticVacuumCleaner** con `RvcRunMode`, `RvcCleanMode` y estado de docking; comprobar en Apple Casa y las posibilidades reales de control de succión.
 - [ ] Seleccionar presentación definitiva en base a usabilidad real: menú nativo solo si existe, barra solo si control respaldado por DP confirmado.
