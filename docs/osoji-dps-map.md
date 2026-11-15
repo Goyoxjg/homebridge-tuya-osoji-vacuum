@@ -12,14 +12,14 @@ Origen: tabla de funciones proporcionada por el propietario, 2026-11-15. No incl
 | reset_roll_brush | Boolean | true / false | desconocido | operación de mantenimiento |
 | reset_filter | Boolean | true / false | desconocido | operación de mantenimiento |
 | seek | Boolean | true / false | desconocido | localizar aspiradora, pendiente |
-| suction | Enum | normal, strong | **14** | lectura LAN **confirmada**: `strong → normal` mientras `DP5=smart_clean`; escritura LAN aún pendiente de validar |
+| suction | Enum | normal, strong | **14** | lectura LAN **confirmada**: `strong → normal` mientras `DP5=smart_clean`; escritura LAN `set_value(14, 'strong')` confirmada con lectura posterior `DP14=strong`; cambio acústico/mecánico todavía no cuantificado |
 | cistern | Enum | low, middle, high | desconocido | nivel de agua, NO es potencia de succión |
 
 ## Semántica de la interfaz
 
 - **Switch V1**: inicio y retorno como se implementó y validó.
 - **Fanv2 V2**: `Active` para inicio y retorno, ya comprobado en Apple Casa.
-- **Succión**: solo **2 niveles**, `normal` y `strong`. La barra `RotationSpeed` se puede cuantizar a dos tramos, por ejemplo 1–50 % = normal, 51–100 % = strong; la presentación visual de porcentaje **no implica una potencia física continua**. No mostrar ni habilitar el control hasta validar la **escritura** LAN y su efecto físico.
+- **Succión**: solo **2 niveles**, `normal` y `strong`. La barra `RotationSpeed` se puede cuantizar a dos tramos, por ejemplo 1–50 % = normal, 51–100 % = strong; la presentación visual de porcentaje **no implica una potencia física continua**. El control `RotationSpeed` se habilita solo en presentación `fan` con transporte LAN, con lectura posterior confirmada. El efecto acústico/mecánico aún no se ha medido.
 - **Modos de limpieza candidatos**: `random`, `spiral`, `smart`, `wall_follow`. `standby` es reposo y `chargego` es regreso a base, por lo que no se deben presentar como ciclos de limpieza. Los cuatro candidatos aún requieren validación de acciones LAN y estados.
 - **HomeKit Fanv2** no admite una lista arbitraria de modos, solo auto/manual. Para seleccionar los cuatro modos, evaluar accesorios de escena separados, mutuamente excluyentes, o una implementación Matter nativa si Apple Casa realmente los expone.
 - **Cisterna**: controlar por separado el volumen de agua si se valida. No confundir con `suction` ni mostrarla en `RotationSpeed`.
@@ -27,7 +27,11 @@ Origen: tabla de funciones proporcionada por el propietario, 2026-11-15. No incl
 
 ## Evidencia de succión (solo lectura)
 
-En una lectura TinyTuya 3.4 supervisada durante limpieza se observó `DP14: strong -> normal` con `DP5=smart_clean` estable; se confirmó el identificador **DP14** para la lectura de `suction`. Todavía no se ha comprobado que `set_value(14, 'strong')` o su equivalente consiga modificar físicamente la potencia. No habilitar la barra sin esa prueba.
+En una lectura TinyTuya 3.4 supervisada durante limpieza se observó `DP14: strong -> normal` con `DP5=smart_clean` estable; se confirmó el identificador **DP14** para la lectura de `suction`. La escritura LAN `set_value(14, 'strong')` devolvió `{'dps': {'14': 'strong'}}`; la lectura posterior fue `strong` y el estado continuó `smart_clean`. El efecto físico no fue medido ni confirmado expresamente.
+
+## Implementación Fanv2 de succión
+
+`RotationSpeed` se expone en modo Fanv2 para transportes locales, con 1–50% = `normal` y 51–100% = `strong`; el estado de lectura reporta 50% o 100% según `DP14`. La escritura se bloquea si la aspiradora no está limpiando y exige comprobación de lectura posterior. No equivale a un control continuo real.
 
 ## Experimento de descubrimiento de succión (solo lectura)
 
