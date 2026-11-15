@@ -21,6 +21,7 @@ Example configuration **with placeholders only**:
   "localIp": "192.168.1.105",
   "localKey": "REPLACE_WITH_LOCAL_KEY",
   "localVersion": "3.4",
+  "allowLocalCommands": false,
   "pythonPath": "/home/homebridge/tinytuya-env/bin/python",
   "debug": false
 }
@@ -28,6 +29,7 @@ Example configuration **with placeholders only**:
 
 ## Behavior and limitations
 
+* By default `allowLocalCommands=false` blocks all physical commands. Enable only after supervised validation.
 * `local`: reads DP5 to determine whether cleaning and changes **only DP3** to `smart` for start or `chargego` for dock. This is **not yet device-verified**; perform a supervised physical test before enabling voice/automations.
 * `cloud`: retains legacy cloud behavior.
 * `auto`: local first; read-only status may fall back to cloud. Commands never fall back automatically to avoid double execution.
