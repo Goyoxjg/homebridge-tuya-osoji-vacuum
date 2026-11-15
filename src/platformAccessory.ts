@@ -52,9 +52,27 @@ export class OsojiVacuumAccessory {
       this.service.getCharacteristic(this.platform.Characteristic.Active)
         .onSet(async (value: CharacteristicValue) => this.setOn(Number(value) === 1))
         .onGet(async () => (await this.getOn()) ? 1 : 0);
-      // RotationSpeed and TargetFanState intentionally omitted: OSOJI suction
-      // DP/ranges and cleaning mode mappings are not verified over LAN yet.
-      this.platform.log.info('OSOJI HomeKit presentation: Fanv2 (power only, no simulated suction)');
+      if (this.mode === 'local' || this.mode === 'auto') {
+        // OSOJI has two discrete suction levels, not a continuously adjustable motor.
+        // 1..50% selects normal; 51..100% selects strong. 0% is invalid.
+        this.service.getCharacteristic(this.platform.Characteristic.RotationSpeed)
+          .setProps({ minValue: 1, maxValue: 100, minStep: 1 })
+          .onGet(async () => (await this.local.getSuction()) === 'strong' ? 100 : 50)
+          .onSet(async (value: CharacteristicValue) => {
+            if (this.platform.config.allowLocalCommands !== true) {
+              throw new Error('OSOJI local suction commands disabled');
+            }
+            const percent = Number(value);
+            if (!Number.isFinite(percent) || percent < 1 || percent > 100) {
+              throw new Error('Invalid suction percentage');
+            }
+            await this.local.setSuction(percent > 50 ? 'strong' : 'normal');
+          });
+        this.platform.log.info('OSOJI HomeKit presentation: Fanv2 with two-level LAN suction');
+      } else {
+        this.platform.log.info('OSOJI HomeKit presentation: Fanv2 (Cloud, power only)');
+      }
+      // Fanv2 target fan mode (auto/manual) does not represent vacuum cleaning modes.
     } else {
       const oldFan = this.accessory.getService(this.platform.Service.Fanv2);
       if (oldFan) this.accessory.removeService(oldFan);
