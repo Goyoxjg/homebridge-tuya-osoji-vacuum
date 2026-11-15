@@ -2,16 +2,17 @@ import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 import { OsojiVacuumPlatformConfig } from './config';
 
-type LocalResponse = { ok: boolean; cleaning?: boolean; status?: string; battery?: number; error?: string };
+type LocalResponse = { ok: boolean; cleaning?: boolean; status?: string; battery?: number; suction?: 'normal' | 'strong'; error?: string };
 
 export class OsojiLocalClient {
   constructor(private readonly config: OsojiVacuumPlatformConfig) {}
 
-  async execute(action: 'status' | 'start' | 'dock'): Promise<LocalResponse> {
+  async execute(action: 'status' | 'start' | 'dock' | 'set_suction', suction?: 'normal' | 'strong'): Promise<LocalResponse> {
     const python = this.config.pythonPath || '/home/homebridge/tinytuya-env/bin/python';
     const script = resolve(__dirname, '../scripts/local_bridge.py');
     const input = JSON.stringify({
       action,
+      ...(suction ? { suction } : {}),
       deviceId: this.config.deviceId,
       ip: this.config.localIp,
       localKey: this.config.localKey,
@@ -48,6 +49,18 @@ export class OsojiLocalClient {
       child.stdin.on('error', () => { /* close/error handler handles process failure */ });
       child.stdin.end(input);
     });
+  }
+
+  async getSuction(): Promise<'normal' | 'strong'> {
+    const response = await this.execute('status');
+    if (response.suction !== 'normal' && response.suction !== 'strong') {
+      throw new Error('OSOJI suction state is unavailable');
+    }
+    return response.suction;
+  }
+
+  async setSuction(suction: 'normal' | 'strong'): Promise<void> {
+    await this.execute('set_suction', suction);
   }
 
   async getCleaning(): Promise<boolean> {
