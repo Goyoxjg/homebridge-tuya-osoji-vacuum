@@ -1,9 +1,16 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { OsojiLocalClient } from './localClient';
+import { OsojiLocalClient, CleaningMode } from './localClient';
 import { OsojiVacuumPlatform } from './platform';
 import { TuyaContext } from '@tuya/tuya-connector-nodejs';
 import { TuyaDeviceStatus } from './types';
 import { withRetry, validateTuyaResponse, TuyaAPIError } from './utils';
+
+const MODE_CHOICES: ReadonlyArray<{ value: CleaningMode; name: string }> = [
+  { value: 'smart', name: 'Inteligente' },
+  { value: 'random', name: 'Aleatorio' },
+  { value: 'spiral', name: 'Espiral' },
+  { value: 'wall_follow', name: 'Bordes' },
+];
 
 export class OsojiVacuumAccessory {
   private service: Service;
@@ -72,7 +79,7 @@ export class OsojiVacuumAccessory {
       } else {
         this.platform.log.info('OSOJI HomeKit presentation: Fanv2 (Cloud, power only)');
       }
-      // Fanv2 target fan mode (auto/manual) does not represent vacuum cleaning modes.
+      // Fanv2 auto/manual is not a substitute for OSOJI's 4 cleaning modes.
     } else {
       const oldFan = this.accessory.getService(this.platform.Service.Fanv2);
       if (oldFan) this.accessory.removeService(oldFan);
@@ -85,11 +92,42 @@ export class OsojiVacuumAccessory {
       this.platform.log.info('OSOJI HomeKit presentation: Switch');
     }
 
+    this.configureCleaningModes(presentation);
     this.platform.log.info('OSOJI vacuum accessory initialized successfully');
 
     // Realizar una prueba de conexión inicial (solo si debug está activado)
     if (this.platform.config.debug && this.mode === 'cloud') {
       this.testConnection();
+    }
+  }
+
+  private configureCleaningModes(presentation: string): void {
+    const enabled = presentation === 'fan'
+      && this.mode === 'local'
+      && this.platform.config.allowExperimentalModes === true;
+    for (const choice of MODE_CHOICES) {
+      const subtype = 'osoji-mode-' + choice.value;
+      const existing = this.accessory.getServiceById(this.platform.Service.Switch, subtype);
+      if (!enabled) {
+        if (existing) this.accessory.removeService(existing);
+        continue;
+      }
+      const service = existing || this.accessory.addService(
+        this.platform.Service.Switch, 'OSOJI ' + choice.name, subtype);
+      service.getCharacteristic(this.platform.Characteristic.On)
+        .onGet(async () => (await this.local.getCleaningMode()) === choice.value)
+        .onSet(async (value: CharacteristicValue) => {
+          // Turning a mode switch OFF has no physical side effect;
+          // only selecting ON may change modes.
+          if (value !== true) return;
+          if (this.platform.config.allowLocalCommands !== true) {
+            throw new Error('OSOJI LAN movement commands disabled');
+          }
+          await this.local.setCleaningMode(choice.value);
+        });
+    }
+    if (enabled) {
+      this.platform.log.warn('OSOJI experimental cleaning modes enabled: physical validation required');
     }
   }
 
