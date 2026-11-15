@@ -114,6 +114,9 @@ export class OsojiVacuumAccessory {
       }
       const service = existing || this.accessory.addService(
         this.platform.Service.Switch, 'OSOJI ' + choice.name, subtype);
+      // A cached service may retain the generic accessory name even when
+      // created with a distinct name. Explicitly set per-service labels.
+      service.setCharacteristic(this.platform.Characteristic.Name, 'OSOJI ' + choice.name);
       service.getCharacteristic(this.platform.Characteristic.On)
         .onGet(async () => (await this.local.getCleaningMode()) === choice.value)
         .onSet(async (value: CharacteristicValue) => {
@@ -123,7 +126,14 @@ export class OsojiVacuumAccessory {
           if (this.platform.config.allowLocalCommands !== true) {
             throw new Error('OSOJI LAN movement commands disabled');
           }
-          await this.local.setCleaningMode(choice.value);
+          this.platform.log.info('OSOJI requested experimental mode: ' + choice.value);
+          try {
+            await this.local.setCleaningMode(choice.value);
+            this.platform.log.info('OSOJI experimental mode readback confirmed: ' + choice.value);
+          } catch (error) {
+            this.platform.log.warn('OSOJI experimental mode change failed: ' + choice.value);
+            throw error;
+          }
         });
     }
     if (enabled) {
