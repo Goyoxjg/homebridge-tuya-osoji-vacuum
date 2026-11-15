@@ -122,13 +122,19 @@
             ]
           },
           {
-            "title": "Ventilador (V2 experimental: encendido/apagado)",
+            "title": "Ventilador (V2: encendido y succión)",
             "enum": [
               "fan"
             ]
           }
         ],
-        "description": "Cambia el tipo del accesorio manteniendo su UUID. Fanv2 solo controla inicio/regreso por ahora; selector de modos y barra de succión pendientes de validar DPS. Cambiar de tipo puede requerir rehacer escenas y automatizaciones."
+        "description": "Selecciona Switch V1 o Fanv2 con potencia de succión LAN en dos niveles. El selector de modos se habilita por separado como experimento supervisado."
+      },
+      "allowExperimentalModes": {
+        "title": "Modos de limpieza experimentales (pruebas presenciales)",
+        "type": "boolean",
+        "default": false,
+        "description": "Desactivado por defecto. Muestra interruptores para Inteligente/Aleatorio/Espiral/Bordes en Apple Casa solo en Fanv2 y modo LAN. Los cambios de modo NO se han validado físicamente. Activar únicamente para pruebas presenciales y supervisadas."
       }
     }
   },
@@ -145,7 +151,8 @@
         "localKey",
         "localVersion",
         "pythonPath",
-        "allowLocalCommands"
+        "allowLocalCommands",
+        "allowExperimentalModes"
       ]
     },
     {
