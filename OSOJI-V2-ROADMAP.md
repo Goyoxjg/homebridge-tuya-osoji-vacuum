@@ -66,6 +66,20 @@ El código se prepara y prueba en CI sin enviar comandos a la aspiradora domést
 - [ ] Seleccionar presentación definitiva en base a usabilidad real: menú nativo solo si existe, barra solo si control respaldado por DP confirmado.
 - [ ] Migración controlada: conservar UUID del accesorio principal o exponer implementación V2 como accesorio opcional de pruebas. No eliminar el switch V1 ni limpiar `cachedAccessories` automáticamente.
 
+## Problema de interfaz observado en Apple Casa (2026-11-15)
+
+En la prueba de los switches auxiliares, Apple Casa mostró los cuatro interruptores como «OSOJI», sin distinguir el modo. Al activar un modo, quedaron inhabilitados durante unos segundos y luego se habilitaron de nuevo. Los logs existentes no identifican el modo enviado. El registro de limpieza pasó de `cleaning=true` a `cleaning=false` entre 16:04:58 y 16:05:19; esto no demuestra por sí solo que un cambio de modo haya detenido el robot.
+
+**Acción segura inmediata:** mantener `homekitPresentation=fan` y volver a `allowExperimentalModes=false` hasta resolver presentación y validar comandos. La opción se desactiva en Homebridge, sin modificar la Local Key ni el emparejamiento. Este PR añade nombres explícitos por servicio y logs de selección/confirmación sin IDs ni secretos, pero **no garantiza que Apple Casa respete esos nombres** ni resuelve el problema de cuatro interruptores.
+
+**Diseño recomendado:** investigar una presentación nativa **Matter Robotic Vacuum Cleaner**, no intentar codificar cuatro modos en `Fanv2.TargetFanState` (solo manual/automático). Un accesorio de aspiradora Matter ofrece tipos de modo de limpieza en las implementaciones actuales de Homebridge 2/Matter, pero requiere un prototipo independiente y verificar soporte de iPhone/Apple TV/HomePod. No migrar automáticamente el dispositivo HomeKit actual; mantenerlo operativo mientras se prueba el nuevo endpoint. Los nombres exactos de modo en Apple Casa podrían estar limitados por su interfaz.
+
+**Bloqueos antes de exponer modos al usuario:** 
+- Distinguir el DP3 seleccionado del estado DP5 (algunos modos podrían cambiar el valor de estado a uno no incluido todavía en la lista de fases).
+- Confirmar presencialmente los efectos físicos y la secuencia segura de `random`, `spiral`, `wall_follow`; no deducir éxito a partir de CI.
+- Construir prototipo Matter con emparejamiento de pruebas separado y mecanismo de apagado/rollback sin interferir con V1.
+- Validar que la selección aparece como lista comprensible y que el modo y succión se sincronizan al cambiar desde Tuya.
+
 ## Fase 4 — Calidad, despliegue y aceptación
 
 - [ ] Tests unitarios de mapping, rangos de velocidad, modos inválidos, lecturas y escrituras, concurrencia, timeout y comandos seguros.
