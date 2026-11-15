@@ -193,7 +193,14 @@ export class OsojiVacuumAccessory {
   async getOn(): Promise<CharacteristicValue> {
     if (this.mode !== 'cloud') {
       try {
-        return await this.local.getCleaning();
+        if (this.platform.config.debug) {
+          this.platform.log.info('[OSOJI LAN diagnostic] HomeKit requested cleaning status');
+        }
+        const cleaning = await this.local.getCleaning();
+        if (this.platform.config.debug) {
+          this.platform.log.info(`[OSOJI LAN diagnostic] HomeKit status read succeeded: cleaning=${cleaning}`);
+        }
+        return cleaning;
       } catch (error) {
         this.platform.log.warn('OSOJI LAN status unavailable');
         if (this.mode === 'local' || !this.tuya) throw error;
