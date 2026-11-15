@@ -1,4 +1,5 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { OsojiLocalClient } from './localClient';
 import { OsojiVacuumPlatform } from './platform';
 import { TuyaContext } from '@tuya/tuya-connector-nodejs';
 import { TuyaDeviceStatus } from './types';
@@ -6,7 +7,9 @@ import { withRetry, validateTuyaResponse, TuyaAPIError } from './utils';
 
 export class OsojiVacuumAccessory {
   private service: Service;
-  private tuya: TuyaContext;
+  private tuya?: TuyaContext;
+  private local: OsojiLocalClient;
+  private mode: 'local' | 'cloud' | 'auto';
 
   constructor(
     private readonly platform: OsojiVacuumPlatform,
@@ -14,12 +17,15 @@ export class OsojiVacuumAccessory {
   ) {
     this.platform.log.info('Initializing OSOJI vacuum accessory...');
 
-    // Inicializar cliente Tuya
-    this.tuya = new TuyaContext({
-      baseUrl: this.platform.config.endpoint,
-      accessKey: this.platform.config.accessKey,
-      secretKey: this.platform.config.secretKey,
-    });
+    this.mode = this.platform.config.connectionMode || 'cloud';
+    this.local = new OsojiLocalClient(this.platform.config);
+    if (this.mode !== 'local' && this.platform.config.accessKey && this.platform.config.secretKey) {
+      this.tuya = new TuyaContext({
+        baseUrl: this.platform.config.endpoint!,
+        accessKey: this.platform.config.accessKey,
+        secretKey: this.platform.config.secretKey,
+      });
+    }
 
     if (this.platform.config.debug) {
       this.platform.log.info('[DEBUG] Configuración de Tuya Client:');
@@ -49,7 +55,7 @@ export class OsojiVacuumAccessory {
     this.platform.log.info('OSOJI vacuum accessory initialized successfully');
 
     // Realizar una prueba de conexión inicial (solo si debug está activado)
-    if (this.platform.config.debug) {
+    if (this.platform.config.debug && this.mode === 'cloud') {
       this.testConnection();
     }
   }
@@ -63,7 +69,7 @@ export class OsojiVacuumAccessory {
 
       const response = await withRetry(
         async () => {
-          const result = await this.tuya.request({
+          const result = await this.tuya!.request({
             path: `/v1.0/devices/${this.platform.config.deviceId}`,
             method: 'GET',
           });
@@ -101,6 +107,17 @@ export class OsojiVacuumAccessory {
     const isOn = value as boolean;
     const timestamp = new Date().toISOString();
 
+    if (this.mode !== 'cloud') {
+      try {
+        await this.local.setCleaning(isOn);
+        return;
+      } catch (error) {
+        this.platform.log.error('OSOJI LAN command failed');
+        // Do not replay movement commands automatically through cloud.
+        throw error;
+      }
+    }
+
     try {
       this.platform.log.info(`[${timestamp}] Setting vacuum to: ${isOn ? 'ON (cleaning)' : 'OFF (stop)'}`);
 
@@ -127,7 +144,7 @@ export class OsojiVacuumAccessory {
       // Enviar comando a Tuya con reintentos
       const response = await withRetry(
         async () => {
-          const result = await this.tuya.request({
+          const result = await this.tuya!.request({
             path: `/v1.0/devices/${this.platform.config.deviceId}/commands`,
             method: 'POST',
             body: { commands },
@@ -171,6 +188,15 @@ export class OsojiVacuumAccessory {
    * Maneja la petición GET del estado del switch
    */
   async getOn(): Promise<CharacteristicValue> {
+    if (this.mode !== 'cloud') {
+      try {
+        return await this.local.getCleaning();
+      } catch (error) {
+        this.platform.log.warn('OSOJI LAN status unavailable');
+        if (this.mode === 'local' || !this.tuya) throw error;
+        // Auto mode only falls back on read-only status requests.
+      }
+    }
     try {
       if (this.platform.config.debug) {
         this.platform.log.info('[DEBUG] Consultando estado del dispositivo...');
@@ -180,7 +206,7 @@ export class OsojiVacuumAccessory {
 
       const response = await withRetry(
         async () => {
-          const result = await this.tuya.request({
+          const result = await this.tuya!.request({
             path: `/v1.0/devices/${this.platform.config.deviceId}/status`,
             method: 'GET',
           });
