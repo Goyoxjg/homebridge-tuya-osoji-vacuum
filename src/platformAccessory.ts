@@ -31,7 +31,7 @@ export class OsojiVacuumAccessory {
       this.platform.log.info('[DEBUG] Configuración de Tuya Client:');
       this.platform.log.info(`[DEBUG] - Endpoint: ${this.platform.config.endpoint}`);
       this.platform.log.info(`[DEBUG] - Device ID: ${this.platform.config.deviceId}`);
-      this.platform.log.info(`[DEBUG] - Access Key: ${this.platform.config.accessKey.substring(0, 8)}...`);
+      this.platform.log.info(`[DEBUG] - Transport: ${this.mode}`);
     }
 
     // Configurar información del accesorio
