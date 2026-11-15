@@ -4,13 +4,14 @@ import json
 import sys
 
 CLEANING = {"cleaning", "smart_clean", "spot_clean", "wall_clean", "mop_clean"}
+CLEANING_MODES = {"smart", "random", "spiral", "wall_follow"}
 
 def run(request, factory=None):
     if factory is None:
         import tinytuya
         factory = tinytuya.Device
     action = request.get("action")
-    if action not in ("status", "start", "dock", "set_suction"):
+    if action not in ("status", "start", "dock", "set_suction", "set_mode"):
         raise ValueError("Unsupported operation")
     device = factory(request["deviceId"], request["ip"], request["localKey"], version=float(request.get("version", 3.4)))
     device.set_socketTimeout(5)
@@ -33,6 +34,28 @@ def run(request, factory=None):
             if not isinstance(after_dps, dict) or after_dps.get("14") != target:
                 raise RuntimeError("Suction change not confirmed by device state")
             return {"ok": True, "suction": target}
+        elif action == "set_mode":
+            if request.get("allowExperimentalModes") is not True:
+                raise RuntimeError("Experimental mode commands are disabled")
+            mode = request.get("mode")
+            if mode not in CLEANING_MODES:
+                raise ValueError("Unsupported cleaning mode")
+            before = device.status()
+            before_dps = before.get("dps") if isinstance(before, dict) else None
+            if not isinstance(before_dps, dict) or before_dps.get("5") not in CLEANING:
+                raise RuntimeError("Mode change requires active cleaning")
+            if before_dps.get("3") == mode:
+                return {"ok": True, "mode": mode}
+            # Hypothesis based on validated start sequence. Other modes still
+            # require supervised physical verification; never enabled by default.
+            response = device.set_multiple_values({1: True, 2: True, 3: mode})
+            if not isinstance(response, dict) or "Error" in response or "Err" in response:
+                raise RuntimeError("Device returned an invalid/error response")
+            after = device.status()
+            after_dps = after.get("dps") if isinstance(after, dict) else None
+            if not isinstance(after_dps, dict) or after_dps.get("3") != mode:
+                raise RuntimeError("Cleaning mode not confirmed by device state")
+            return {"ok": True, "mode": mode}
         elif action == "start":
             # Verified on the OSOJI X420 over Tuya LAN 3.4: the three
             # datapoints must be sent together, not as individual writes.
@@ -50,6 +73,7 @@ def run(request, factory=None):
                 raise RuntimeError("Missing DPS response")
             return {"ok": True, "cleaning": dps.get("5") in CLEANING,
                     "status": str(dps.get("5", "unknown")),
+                    "mode": dps.get("3") if dps.get("3") in CLEANING_MODES else None,
                     "battery": dps.get("6"),
                     "suction": dps.get("14") if dps.get("14") in ("normal", "strong") else None}
         return {"ok": True}
