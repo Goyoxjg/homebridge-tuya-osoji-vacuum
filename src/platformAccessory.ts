@@ -40,17 +40,32 @@ export class OsojiVacuumAccessory {
       .setCharacteristic(this.platform.Characteristic.Model, 'X420')
       .setCharacteristic(this.platform.Characteristic.SerialNumber, this.platform.config.deviceId);
 
-    // Obtener o crear el servicio Switch
-    this.service = this.accessory.getService(this.platform.Service.Switch)
-      || this.accessory.addService(this.platform.Service.Switch);
-
-    // Configurar el nombre del servicio
-    this.service.setCharacteristic(this.platform.Characteristic.Name, 'OSOJI');
-
-    // Registrar handlers para el Switch
-    this.service.getCharacteristic(this.platform.Characteristic.On)
-      .onSet(this.setOn.bind(this))
-      .onGet(this.getOn.bind(this));
+    // Presentación opcional: un único servicio principal. Conserva el UUID
+    // del accesorio, pero el cambio de tipo puede alterar automatizaciones.
+    const presentation = this.platform.config.homekitPresentation || 'switch';
+    if (presentation === 'fan') {
+      const oldSwitch = this.accessory.getService(this.platform.Service.Switch);
+      if (oldSwitch) this.accessory.removeService(oldSwitch);
+      this.service = this.accessory.getService(this.platform.Service.Fanv2)
+        || this.accessory.addService(this.platform.Service.Fanv2);
+      this.service.setCharacteristic(this.platform.Characteristic.Name, 'OSOJI');
+      this.service.getCharacteristic(this.platform.Characteristic.Active)
+        .onSet(async (value: CharacteristicValue) => this.setOn(Number(value) === 1))
+        .onGet(async () => (await this.getOn()) ? 1 : 0);
+      // RotationSpeed and TargetFanState intentionally omitted: OSOJI suction
+      // DP/ranges and cleaning mode mappings are not verified over LAN yet.
+      this.platform.log.info('OSOJI HomeKit presentation: Fanv2 (power only, no simulated suction)');
+    } else {
+      const oldFan = this.accessory.getService(this.platform.Service.Fanv2);
+      if (oldFan) this.accessory.removeService(oldFan);
+      this.service = this.accessory.getService(this.platform.Service.Switch)
+        || this.accessory.addService(this.platform.Service.Switch);
+      this.service.setCharacteristic(this.platform.Characteristic.Name, 'OSOJI');
+      this.service.getCharacteristic(this.platform.Characteristic.On)
+        .onSet(this.setOn.bind(this))
+        .onGet(this.getOn.bind(this));
+      this.platform.log.info('OSOJI HomeKit presentation: Switch');
+    }
 
     this.platform.log.info('OSOJI vacuum accessory initialized successfully');
 

@@ -1,6 +1,7 @@
 export interface OsojiVacuumPlatformConfig {
   name: string;
   connectionMode?: 'local' | 'cloud' | 'auto';
+  homekitPresentation?: 'switch' | 'fan';
   localIp?: string;
   localKey?: string;
   localVersion?: string;

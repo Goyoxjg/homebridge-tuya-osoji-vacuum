@@ -131,6 +131,8 @@ export class OsojiVacuumPlatform implements DynamicPlatformPlugin {
     if (existingAccessory) {
       this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
       new OsojiVacuumAccessory(this, existingAccessory);
+      // Persist service type changes when switching between Switch and Fanv2.
+      this.api.updatePlatformAccessories([existingAccessory]);
     } else {
       this.log.info('Adding new accessory: OSOJI');
       const accessory = new this.api.platformAccessory('OSOJI', uuid, Categories.AIR_PURIFIER);
