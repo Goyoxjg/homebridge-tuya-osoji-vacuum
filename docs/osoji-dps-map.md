@@ -12,18 +12,22 @@ Origen: tabla de funciones proporcionada por el propietario, 2026-11-15. No incl
 | reset_roll_brush | Boolean | true / false | desconocido | operación de mantenimiento |
 | reset_filter | Boolean | true / false | desconocido | operación de mantenimiento |
 | seek | Boolean | true / false | desconocido | localizar aspiradora, pendiente |
-| suction | Enum | normal, strong | **desconocido** | niveles conocidos, localización del DP y escritura LAN pendientes |
+| suction | Enum | normal, strong | **14** | lectura LAN **confirmada**: `strong → normal` mientras `DP5=smart_clean`; escritura LAN aún pendiente de validar |
 | cistern | Enum | low, middle, high | desconocido | nivel de agua, NO es potencia de succión |
 
 ## Semántica de la interfaz
 
 - **Switch V1**: inicio y retorno como se implementó y validó.
 - **Fanv2 V2**: `Active` para inicio y retorno, ya comprobado en Apple Casa.
-- **Succión**: solo **2 niveles**, `normal` y `strong`. La barra `RotationSpeed` se puede cuantizar a dos tramos, por ejemplo 1–50 % = normal, 51–100 % = strong; la presentación visual de porcentaje **no implica una potencia física continua**. No mostrar ni habilitar el control hasta validar DP y lecturas.
+- **Succión**: solo **2 niveles**, `normal` y `strong`. La barra `RotationSpeed` se puede cuantizar a dos tramos, por ejemplo 1–50 % = normal, 51–100 % = strong; la presentación visual de porcentaje **no implica una potencia física continua**. No mostrar ni habilitar el control hasta validar la **escritura** LAN y su efecto físico.
 - **Modos de limpieza candidatos**: `random`, `spiral`, `smart`, `wall_follow`. `standby` es reposo y `chargego` es regreso a base, por lo que no se deben presentar como ciclos de limpieza. Los cuatro candidatos aún requieren validación de acciones LAN y estados.
 - **HomeKit Fanv2** no admite una lista arbitraria de modos, solo auto/manual. Para seleccionar los cuatro modos, evaluar accesorios de escena separados, mutuamente excluyentes, o una implementación Matter nativa si Apple Casa realmente los expone.
 - **Cisterna**: controlar por separado el volumen de agua si se valida. No confundir con `suction` ni mostrarla en `RotationSpeed`.
 - Las órdenes `direction_control` y de reset quedan fuera del alcance V2 inicial por seguridad/usabilidad.
+
+## Evidencia de succión (solo lectura)
+
+En una lectura TinyTuya 3.4 supervisada durante limpieza se observó `DP14: strong -> normal` con `DP5=smart_clean` estable; se confirmó el identificador **DP14** para la lectura de `suction`. Todavía no se ha comprobado que `set_value(14, 'strong')` o su equivalente consiga modificar físicamente la potencia. No habilitar la barra sin esa prueba.
 
 ## Experimento de descubrimiento de succión (solo lectura)
 

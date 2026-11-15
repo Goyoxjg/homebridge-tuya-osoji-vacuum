@@ -19,7 +19,7 @@ Ampliar la interfaz de Apple Casa, inspirada en la ficha del aire acondicionado 
 - Lectura observada: DP1 `power`, DP3 `mode`, DP5 `status`, DP6 batería; DP2 `power_go` no figura en el resultado de `status()`.
 - Inicio comprobado: escritura **atómica** `{1: True, 2: True, 3: "smart"}` -> `smart_clean` y limpieza física.
 - Detener y regresar a base comprobado: escritura **atómica** `{1: True, 2: False, 3: "chargego"}` -> vuelta física a la base.
-- El Cloud anterior incluía `suction: "normal"`; **todavía no conocemos el DP LAN, los valores o niveles realmente admitidos**.
+- La succión es `DP14` y admite `normal` o `strong`: **lecturas LAN confirmadas con ambos valores mientras limpia**; la escritura LAN aún requiere una prueba física supervisada.
 - El accesorio actual es `Service.Switch`, asociado a un UUID estable. Debe existir ruta de migración sin romper emparejamiento ni automaciones.
 
 ## Selección de presentación en configuración
@@ -39,8 +39,8 @@ La opción `homekitPresentation` acepta `switch` (predeterminado, V1) o `fan` (p
 ## Fase 1 — Descubrimiento de modos y succión (bloqueante)
 
 - [x] Obtener desde Tuya lista de modos de OSOJI (`standby`, `random`, `spiral`, `smart`, `chargego`, `wall_follow`) y succión (`normal`, `strong`). Tabla proporcionada por el propietario; mapeo completo documentado en `docs/osoji-dps-map.md`.
-- [ ] Ejecutar **solo lecturas** del mapa DPS durante cambios manuales de succión `normal` ↔ `strong` desde Tuya. Disponible `scripts/compare_local_dps.py`, sin escrituras.
-- [ ] Confirmar si el DP de succión se lee por LAN; algunos DPS son write-only, pueden necesitar consulta adicional o no estar disponibles localmente.
+- [x] Ejecutar **solo lecturas** del mapa DPS durante cambios manuales de succión `normal` ↔ `strong` desde Tuya. Disponible `scripts/compare_local_dps.py`, sin escrituras.
+- [x] Confirmar que la succión se lee por LAN: **DP14**, con transición observada `strong → normal` durante `smart_clean`.
 - [ ] Validar físicamente cada escritura local individual / atómica autorizada, con operación supervisada, sin pruebas automáticas de movimiento.
 - [x] Generar `docs/osoji-dps-map.md` con todas las funciones oficiales suministradas, distinguiendo DPs conocidos de desconocidos; sin claves ni IDs privados.
 
