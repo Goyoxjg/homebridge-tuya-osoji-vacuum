@@ -1,10 +1,10 @@
-# OSOJI X420 — Local-first (experimental branch)
+# OSOJI X420 — Local-first (verified LAN start and dock)
 
 This branch preserves the original `OsojiVacuum` HomeKit accessory UUID and Switch service. It adds an **optional local transport** using the Python TinyTuya installation already confirmed on the Raspberry Pi.
 
 ## Before testing
 
-* The production Homebridge plugin is currently disabled. Keep it disabled until a test build has passed.
+* Back up `config.json` and the installed plugin before deployment. Keep `allowLocalCommands=false` until the updated code and unit tests have passed on the Raspberry Pi.
 * Use Homebridge 2.5.x and Node 24 for compatibility testing.
 * OSOJI X420 was discovered at protocol 3.4 on the local network. Reserve a DHCP address for it.
 * TinyTuya needs to be installed in the Python interpreter given by `pythonPath`.
@@ -30,7 +30,7 @@ Example configuration **with placeholders only**:
 ## Behavior and limitations
 
 * By default `allowLocalCommands=false` blocks all physical commands. Enable only after supervised validation.
-* `local`: reads DP5 to determine whether cleaning and changes **DP1=true, DP2=true, DP3=smart together** for start; verified physically on OSOJI X420 with `DP5=smart_clean`. **Dock is deliberately blocked until its LAN sequence is physically validated**, even when `allowLocalCommands=true`. Do not enable HomeKit control until both directions are tested.
+* `local`: reads DP5 for cleaning state. **Start** sends `{1: True, 2: True, 3: "smart"}` atomically; real device confirmed physical cleaning and `DP5=smart_clean`. **Dock** sends `{1: True, 2: False, 3: "chargego"}` atomically; user confirmed physical stop and return to charging base. Both sequences were tested on OSOJI X420 over Tuya LAN 3.4. HomeKit commands remain opt-in via `allowLocalCommands`.
 * `cloud`: retains legacy cloud behavior.
 * `auto`: local first; read-only status may fall back to cloud. Commands never fall back automatically to avoid double execution.
 * A DP3 `smart` mode can coexist with charging status, so HomeKit On is determined from DP5 rather than DP3. The observed `charging_base` value is not treated as cleaning.
@@ -46,7 +46,7 @@ npm ci
 npm run build
 ```
 
-After installation on a **test** Homebridge instance, verify local status first. Then supervise a single start and dock action. Check Homebridge stability and only after that test with WAN disabled.
+After deployment on Homebridge, verify local status first and supervise a single HomeKit start/dock cycle. Turn `allowLocalCommands` off and disable automated scenes until verified through HomeKit. Check Homebridge stability and only after that test with WAN disconnected.
 
 ## Rollback
 

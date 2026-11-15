@@ -23,9 +23,9 @@ def run(request, factory=None):
             # The device reported DP5=smart_clean and physically started.
             response = device.set_multiple_values({1: True, 2: True, 3: "smart"})
         else:
-            # Dock requires a separately supervised LAN test. Do not
-            # assume the legacy Cloud sequence is safe for LAN.
-            raise RuntimeError("Dock command not yet verified over LAN")
+            # Verified physically on the OSOJI X420: stops cleaning and
+            # navigates back to the charging base via Tuya LAN 3.4.
+            response = device.set_multiple_values({1: True, 2: False, 3: "chargego"})
         if not isinstance(response, dict) or "Error" in response or "Err" in response:
             raise RuntimeError("Device returned an invalid/error response")
         if action == "status":
