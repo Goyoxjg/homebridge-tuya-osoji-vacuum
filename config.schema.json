@@ -103,6 +103,12 @@
         "title": "Python con TinyTuya instalado",
         "type": "string",
         "default": "/home/homebridge/tinytuya-env/bin/python"
+      },
+      "allowLocalCommands": {
+        "title": "Autorizar comandos de movimiento LAN",
+        "type": "boolean",
+        "default": false,
+        "description": "Desactivado por defecto. Activar solo después de validar físicamente inicio y retorno a base."
       }
     }
   },
@@ -117,7 +123,8 @@
         "localIp",
         "localKey",
         "localVersion",
-        "pythonPath"
+        "pythonPath",
+        "allowLocalCommands"
       ]
     },
     {
