@@ -52,10 +52,16 @@ La opción `homekitPresentation` acepta `switch` (predeterminado, V1) o `fan` (p
 - [ ] Serializar y deduplicar escrituras; validar entrada, comprobar estados posteriores, timeouts, errores y bloqueo `allowLocalCommands`. No reintentar ciegamente acciones de movimiento ni activar simultáneamente comandos incompatibles.
 - [ ] Mantener `local` sin fallback Cloud para acciones; preservar `cloud` heredado.
 
+## Prototipo de modos LAN para pruebas presenciales
+
+El PR de modos introduce `allowExperimentalModes` (**false** de forma predeterminada). Solo con `homekitPresentation=fan`, `connectionMode=local`, `allowLocalCommands=true` y `allowExperimentalModes=true` se crean cuatro switches auxiliares de modo: Inteligente (`smart`), Aleatorio (`random`), Espiral (`spiral`) y Bordes (`wall_follow`). No hay un selector de modos arbitrario dentro de `Fanv2` en Apple Casa. Se consulta DP3 para reflejar el modo activo; tocar OFF sobre un switch de modo **no** detiene el robot ni manda comando. Seleccionar ON exige limpieza en curso, escribe la combinación `{1: true, 2: true, 3: modo}` y comprueba DP3 posteriormente. Solo está confirmada físicamente la combinación para `smart`: los otros tres modos son hipótesis de protocolo que necesitan pruebas presenciales, no deben activarse en instalaciones de uso cotidiano hasta verificarlos. El cambio de modo podría alterar el recorrido inesperadamente: mantener el área despejada y la escena de regreso a base disponible.
+
+El código se prepara y prueba en CI sin enviar comandos a la aspiradora doméstica. **No habilitar el flag ni desplegar a Raspberry sin prueba supervisada**. El modo switch V1 y la potencia de Fanv2 mantienen el comportamiento actual cuando el flag está desactivado.
+
 ## Fase 3 — Interfaz Apple Casa
 
 - [x] **Fanv2 con succión DP14:** `Active` para inicio/dock y `RotationSpeed` para `normal`/`strong` discretos. Escritura `strong` confirmada por respuesta y lectura posterior; Apple Casa y aumento físico de succión por encima de 50 % confirmados por el propietario.
-- [ ] **Próximo hito — selector de modos:** comprobar si algún tipo nativo permite las opciones necesarias. Si no, crear switches de escenas (mutuamente excluyentes y sincronizados con el estado) sin duplicar el switch principal.
+- [x] **Prototipo inicial — selector de modos:** switches auxiliares de solo selección ON en `Fanv2`, con DP3 y bandera de activación separada, desactivada por defecto. Los comandos LAN de modos nuevos **aún no están físicamente validados**; revisar si Apple Casa los agrupa de forma usable, y tras la validación evaluar modos nativos Matter.
 - [ ] Probar propuesta alternativa **Matter RoboticVacuumCleaner** con `RvcRunMode`, `RvcCleanMode` y estado de docking; comprobar en Apple Casa y las posibilidades reales de control de succión.
 - [ ] Seleccionar presentación definitiva en base a usabilidad real: menú nativo solo si existe, barra solo si control respaldado por DP confirmado.
 - [ ] Migración controlada: conservar UUID del accesorio principal o exponer implementación V2 como accesorio opcional de pruebas. No eliminar el switch V1 ni limpiar `cachedAccessories` automáticamente.
